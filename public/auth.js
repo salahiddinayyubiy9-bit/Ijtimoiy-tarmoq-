@@ -15,6 +15,7 @@ const profileRank = document.getElementById('profileRank');
 const homeSection = document.getElementById('homeSection');
 
 let currentPhone = '';
+let currentUser = null;
 
 function showLoggedIn(user) {
   authSection.classList.add('hidden');
@@ -22,6 +23,7 @@ function showLoggedIn(user) {
   profilePhone.textContent = user.phone;
   profileDiamonds.textContent = user.diamonds;
   profileRank.textContent = user.rank;
+  currentUser = user;
 }
 
 const savedUser = localStorage.getItem('user');
@@ -105,6 +107,40 @@ const categoryToSection = {
   doktorlar: 'doktorlarSection'
 };
 
+function renderRooms(rooms, listElement) {
+  listElement.innerHTML = '';
+
+  if (rooms.length === 0) {
+    listElement.innerHTML = '<p class="emptyRoomsText">Hali xonalar yo\'q. Birinchi bo\'lib yarating!</p>';
+    return;
+  }
+
+  rooms.forEach((room) => {
+    const item = document.createElement('div');
+    item.className = 'roomItem';
+    item.innerHTML = `
+      <span class="roomName">${room.name}</span>
+      <span class="roomCreator">${room.createdBy}</span>
+    `;
+    listElement.appendChild(item);
+  });
+}
+
+async function loadRooms(category, sectionElement) {
+  const listElement = sectionElement.querySelector('.roomList');
+
+  try {
+    const response = await fetch(`/api/rooms/${category}`);
+    const data = await response.json();
+
+    if (data.success) {
+      renderRooms(data.rooms, listElement);
+    }
+  } catch (error) {
+    listElement.innerHTML = '<p class="emptyRoomsText">Xonalarni yuklashda xatolik yuz berdi.</p>';
+  }
+}
+
 const categoryCards = document.querySelectorAll('.categoryCard');
 
 categoryCards.forEach((card) => {
@@ -115,6 +151,7 @@ categoryCards.forEach((card) => {
 
     homeSection.classList.add('hidden');
     targetSection.classList.remove('hidden');
+    loadRooms(category, targetSection);
   });
 });
 
@@ -128,5 +165,41 @@ backButtons.forEach((btn) => {
 
     targetSection.classList.add('hidden');
     homeSection.classList.remove('hidden');
+  });
+});
+
+const createRoomForms = document.querySelectorAll('.createRoomForm');
+
+createRoomForms.forEach((form) => {
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const sectionElement = form.closest('.roomSection');
+    const category = sectionElement.dataset.category;
+    const nameInput = form.querySelector('.roomNameInput');
+    const roomName = nameInput.value;
+
+    try {
+      const response = await fetch('/api/rooms/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: roomName,
+          category: category,
+          phone: currentUser.phone
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        nameInput.value = '';
+        loadRooms(category, sectionElement);
+      } else {
+        alert(data.error);
+      }
+    } catch (error) {
+      alert('Xatolik yuz berdi. Qaytadan urinib ko\'ring.');
+    }
   });
 });
