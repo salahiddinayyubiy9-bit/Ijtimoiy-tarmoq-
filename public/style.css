@@ -197,3 +197,51 @@ button:active {
   font-weight: 600;
   text-align: center;
 }
+.backBtn {
+  background-color: transparent;
+  color: #5865F2;
+  border: none;
+  padding: 8px 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 16px;
+}
+
+.backBtn:hover {
+  text-decoration: underline;
+  background-color: transparent;
+}
+
+.lessonList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 360px;
+}
+
+.lessonItem {
+  background-color: #1a1d24;
+  border: 1px solid #2a2e38;
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.lessonItem:hover {
+  border-color: #5865F2;
+}
+
+.lessonIcon {
+  font-size: 1.4rem;
+}
+
+.lessonName {
+  color: #e8e8e8;
+  font-size: 0.95rem;
+  font-weight: 500;
+}

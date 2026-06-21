@@ -2,7 +2,6 @@ const step1 = document.getElementById('step1');
 const step2 = document.getElementById('step2');
 const authSection = document.getElementById('authSection');
 const loggedInSection = document.getElementById('loggedInSection');
-const welcomeText = document.getElementById('welcomeText');
 const logoutBtn = document.getElementById('logoutBtn');
 const phoneForm = document.getElementById('phoneForm');
 const codeForm = document.getElementById('codeForm');
@@ -13,6 +12,9 @@ const message = document.getElementById('message');
 const profilePhone = document.getElementById('profilePhone');
 const profileDiamonds = document.getElementById('profileDiamonds');
 const profileRank = document.getElementById('profileRank');
+const homeSection = document.getElementById('homeSection');
+const lessonsSection = document.getElementById('lessonsSection');
+const backToHomeBtn = document.getElementById('backToHomeBtn');
 
 let currentPhone = '';
 
@@ -93,11 +95,23 @@ logoutBtn.addEventListener('click', () => {
   step2.classList.add('hidden');
   phoneForm.reset();
 });
+
 const categoryCards = document.querySelectorAll('.categoryCard');
 
 categoryCards.forEach((card) => {
   card.addEventListener('click', () => {
     const category = card.dataset.category;
-    alert(`"${card.querySelector('.categoryName').textContent}" bo'limi tez orada ishga tushadi!`);
+
+    if (category === 'bepuldarslar') {
+      homeSection.classList.add('hidden');
+      lessonsSection.classList.remove('hidden');
+    } else {
+      alert(`"${card.querySelector('.categoryName').textContent}" bo'limi tez orada ishga tushadi!`);
+    }
   });
+});
+
+backToHomeBtn.addEventListener('click', () => {
+  lessonsSection.classList.add('hidden');
+  homeSection.classList.remove('hidden');
 });
