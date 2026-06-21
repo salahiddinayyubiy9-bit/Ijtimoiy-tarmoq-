@@ -152,3 +152,48 @@ button:active {
 .statIcon {
   font-size: 1.1rem;
 }
+.sectionTitle {
+  color: #ffffff;
+  font-size: 1.3rem;
+  margin-top: 32px;
+  margin-bottom: 16px;
+}
+
+.categoryGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  max-width: 360px;
+}
+
+.categoryCard {
+  background-color: #1a1d24;
+  border: 1px solid #2a2e38;
+  border-radius: 12px;
+  padding: 20px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s;
+}
+
+.categoryCard:hover {
+  border-color: #5865F2;
+}
+
+.categoryCard:active {
+  transform: scale(0.96);
+}
+
+.categoryIcon {
+  font-size: 1.8rem;
+}
+
+.categoryName {
+  color: #e8e8e8;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+}

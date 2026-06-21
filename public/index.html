@@ -10,7 +10,7 @@
   <h1>Xush kelibsiz!</h1>
 
   <div id="authSection">
-    <div id="step1">    
+    <div id="step1">
       <p>Telefon raqamingizni kiriting.</p>
       <form id="phoneForm">
         <input type="tel" id="phoneInput" placeholder="+998901234567" required>
@@ -27,7 +27,8 @@
       </form>
     </div>
   </div>
-<div id="loggedInSection" class="hidden">
+
+  <div id="loggedInSection" class="hidden">
     <div class="profileCard">
       <div class="profileAvatar">👤</div>
       <p class="profilePhone" id="profilePhone"></p>
@@ -43,7 +44,46 @@
       </div>
       <button id="logoutBtn">Chiqish</button>
     </div>
-</div>
+
+    <div id="homeSection">
+      <h2 class="sectionTitle">Kategoriyalar</h2>
+      <div class="categoryGrid">
+        <div class="categoryCard" data-category="tanishuv">
+          <span class="categoryIcon">💬</span>
+          <span class="categoryName">Tanishuv-chat</span>
+        </div>
+        <div class="categoryCard" data-category="talabalar">
+          <span class="categoryIcon">🎓</span>
+          <span class="categoryName">Talabalar</span>
+        </div>
+        <div class="categoryCard" data-category="oqituvchilar">
+          <span class="categoryIcon">📚</span>
+          <span class="categoryName">O'qituvchilar</span>
+        </div>
+        <div class="categoryCard" data-category="taqdimotlar">
+          <span class="categoryIcon">🖥️</span>
+          <span class="categoryName">Taqdimotlar</span>
+        </div>
+        <div class="categoryCard" data-category="ilmiyishlar">
+          <span class="categoryIcon">🔬</span>
+          <span class="categoryName">Ilmiy ishlar</span>
+        </div>
+        <div class="categoryCard" data-category="bepuldarslar">
+          <span class="categoryIcon">🆓</span>
+          <span class="categoryName">Bepul darslar</span>
+        </div>
+        <div class="categoryCard" data-category="qonun">
+          <span class="categoryIcon">⚖️</span>
+          <span class="categoryName">Qonun masalalari</span>
+        </div>
+        <div class="categoryCard" data-category="doktorlar">
+          <span class="categoryIcon">🩺</span>
+          <span class="categoryName">Doktorlar</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <p id="message"></p>
 
   <script src="auth.js"></script>

@@ -93,3 +93,11 @@ logoutBtn.addEventListener('click', () => {
   step2.classList.add('hidden');
   phoneForm.reset();
 });
+const categoryCards = document.querySelectorAll('.categoryCard');
+
+categoryCards.forEach((card) => {
+  card.addEventListener('click', () => {
+    const category = card.dataset.category;
+    alert(`"${card.querySelector('.categoryName').textContent}" bo'limi tez orada ishga tushadi!`);
+  });
+});
