@@ -1,6 +1,8 @@
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
 import db from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -130,35 +132,44 @@ app.get('/api/rooms/single/:roomId', async (req, res) => {
   res.json({ success: true, room: room });
 });
 
-app.post('/api/rooms/:roomId/message', async (req, res) => {
-  const { roomId } = req.params;
-  const { text, phone } = req.body;
+const httpServer = createServer(app);
+const io = new Server(httpServer);
 
-  if (!text || !phone) {
-    return res.status(400).json({ error: 'Xabar matni yoki telefon kiritilmadi' });
-  }
+io.on('connection', (socket) => {
+  console.log('Yangi foydalanuvchi ulandi:', socket.id);
 
-  await db.read();
+  socket.on('joinRoom', (roomId) => {
+    socket.join(roomId.toString());
+    console.log(`Socket ${socket.id} xonaga qo'shildi: ${roomId}`);
+  });
 
-  const room = db.data.rooms.find(r => r.id === Number(roomId));
+  socket.on('sendMessage', async (data) => {
+    const { roomId, text, phone } = data;
 
-  if (!room) {
-    return res.status(404).json({ error: 'Xona topilmadi' });
-  }
+    await db.read();
+    const room = db.data.rooms.find(r => r.id === Number(roomId));
 
-  const newMessage = {
-    id: Date.now(),
-    text: text,
-    sender: phone,
-    sentAt: new Date().toISOString()
-  };
+    if (!room) return;
 
-  room.messages.push(newMessage);
-  await db.write();
+    const newMessage = {
+      id: Date.now(),
+      roomId: room.id,
+      text: text,
+      sender: phone,
+      sentAt: new Date().toISOString()
+    };
 
-  res.json({ success: true, message: newMessage });
+    room.messages.push(newMessage);
+    await db.write();
+
+    io.to(roomId.toString()).emit('newMessage', newMessage);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Foydalanuvchi uzildi:', socket.id);
+  });
 });
 
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`Server ishga tushdi: http://localhost:${PORT}`);
 });

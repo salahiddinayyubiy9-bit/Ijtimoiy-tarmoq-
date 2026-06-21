@@ -1,3 +1,5 @@
+const socket = io();
+
 const step1 = document.getElementById('step1');
 const step2 = document.getElementById('step2');
 const authSection = document.getElementById('authSection');
@@ -152,6 +154,18 @@ async function loadRooms(category, sectionElement) {
   }
 }
 
+function appendMessage(msg) {
+  const bubble = document.createElement('div');
+  const isOwn = msg.sender === currentUser.phone;
+  bubble.className = isOwn ? 'messageBubble own' : 'messageBubble';
+  bubble.innerHTML = `
+    <p class="messageSender">${msg.sender}</p>
+    <p class="messageText">${msg.text}</p>
+  `;
+  messageList.appendChild(bubble);
+  messageList.scrollTop = messageList.scrollHeight;
+}
+
 function renderMessages(messages) {
   messageList.innerHTML = '';
 
@@ -161,17 +175,8 @@ function renderMessages(messages) {
   }
 
   messages.forEach((msg) => {
-    const bubble = document.createElement('div');
-    const isOwn = msg.sender === currentUser.phone;
-    bubble.className = isOwn ? 'messageBubble own' : 'messageBubble';
-    bubble.innerHTML = `
-      <p class="messageSender">${msg.sender}</p>
-      <p class="messageText">${msg.text}</p>
-    `;
-    messageList.appendChild(bubble);
+    appendMessage(msg);
   });
-
-  messageList.scrollTop = messageList.scrollHeight;
 }
 
 async function openRoom(roomId, sectionElement) {
@@ -187,11 +192,18 @@ async function openRoom(roomId, sectionElement) {
       roomDetailSection.classList.remove('hidden');
       roomDetailName.textContent = data.room.name;
       renderMessages(data.room.messages);
+      socket.emit('joinRoom', roomId);
     }
   } catch (error) {
     alert('Xonani yuklashda xatolik yuz berdi.');
   }
 }
+
+socket.on('newMessage', (msg) => {
+  if (Number(currentRoomId) === msg.roomId) {
+    appendMessage(msg);
+  }
+});
 
 backToRoomListBtn.addEventListener('click', () => {
   roomDetailSection.classList.add('hidden');
@@ -200,32 +212,17 @@ backToRoomListBtn.addEventListener('click', () => {
   }
 });
 
-sendMessageForm.addEventListener('submit', async (e) => {
+sendMessageForm.addEventListener('submit', (e) => {
   e.preventDefault();
   const text = messageInput.value;
 
-  try {
-    const response = await fetch(`/api/rooms/${currentRoomId}/message`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: text, phone: currentUser.phone })
-    });
+  socket.emit('sendMessage', {
+    roomId: currentRoomId,
+    text: text,
+    phone: currentUser.phone
+  });
 
-    const data = await response.json();
-
-    if (data.success) {
-      messageInput.value = '';
-      const roomResponse = await fetch(`/api/rooms/single/${currentRoomId}`);
-      const roomData = await roomResponse.json();
-      if (roomData.success) {
-        renderMessages(roomData.room.messages);
-      }
-    } else {
-      alert(data.error);
-    }
-  } catch (error) {
-    alert('Xabar yuborishda xatolik yuz berdi.');
-  }
+  messageInput.value = '';
 });
 
 const categoryCards = document.querySelectorAll('.categoryCard');
