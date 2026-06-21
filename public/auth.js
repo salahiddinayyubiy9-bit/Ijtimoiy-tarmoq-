@@ -21,6 +21,7 @@ const messageList = document.getElementById('messageList');
 const sendMessageForm = document.getElementById('sendMessageForm');
 const messageInput = document.getElementById('messageInput');
 const backToRoomListBtn = document.getElementById('backToRoomListBtn');
+const dailyClaimBtn = document.getElementById('dailyClaimBtn');
 
 let currentPhone = '';
 let currentUser = null;
@@ -106,6 +107,29 @@ logoutBtn.addEventListener('click', () => {
   phoneForm.reset();
 });
 
+dailyClaimBtn.addEventListener('click', async () => {
+  try {
+    const response = await fetch('/api/daily-claim', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: currentUser.phone })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      currentUser = data.user;
+      localStorage.setItem('user', JSON.stringify(data.user));
+      profileDiamonds.textContent = data.user.diamonds;
+      alert('Tabriklaymiz! Sizga 15 olmos qo\'shildi!');
+    } else {
+      alert(data.error);
+    }
+  } catch (error) {
+    alert('Xatolik yuz berdi. Qaytadan urinib ko\'ring.');
+  }
+});
+
 const categoryToSection = {
   tanishuv: 'tanishuvSection',
   talabalar: 'talabalarSection',
@@ -117,7 +141,7 @@ const categoryToSection = {
   doktorlar: 'doktorlarSection'
 };
 
-function renderRooms(rooms, listElement, sectionElement) {
+function renderRooms(rooms, listElement, sectionElement, category) {
   listElement.innerHTML = '';
 
   if (rooms.length === 0) {
@@ -128,15 +152,56 @@ function renderRooms(rooms, listElement, sectionElement) {
   rooms.forEach((room) => {
     const item = document.createElement('div');
     item.className = 'roomItem';
+
+    const isOwner = currentUser && room.createdBy === currentUser.phone;
+    const deleteBtnHtml = isOwner ? `<span class="deleteRoomBtn">🗑️</span>` : '';
+
     item.innerHTML = `
       <span class="roomName">${room.name}</span>
       <span class="roomCreator">${room.createdBy}</span>
+      ${deleteBtnHtml}
     `;
-    item.addEventListener('click', () => {
+
+    item.addEventListener('click', (e) => {
+      if (e.target.classList.contains('deleteRoomBtn')) {
+        return;
+      }
       openRoom(room.id, sectionElement);
     });
+
+    if (isOwner) {
+      const deleteBtn = item.querySelector('.deleteRoomBtn');
+      deleteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteRoom(room.id, category, sectionElement);
+      });
+    }
+
     listElement.appendChild(item);
   });
+}
+
+async function deleteRoom(roomId, category, sectionElement) {
+  const confirmed = confirm('Rostdan ham bu xonani o\'chirmoqchimisiz?');
+  if (!confirmed) return;
+
+  try {
+    const response = await fetch(`/api/rooms/${roomId}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: currentUser.phone })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      loadRooms(category, sectionElement);
+    } else {
+      alert(data.error);
+    }
+  } catch (error) {
+    alert('Xonani o\'chirishda xatolik yuz berdi.');
+  }
 }
 
 async function loadRooms(category, sectionElement) {
@@ -147,7 +212,7 @@ async function loadRooms(category, sectionElement) {
     const data = await response.json();
 
     if (data.success) {
-      renderRooms(data.rooms, listElement, sectionElement);
+      renderRooms(data.rooms, listElement, sectionElement, category);
     }
   } catch (error) {
     listElement.innerHTML = '<p class="emptyRoomsText">Xonalarni yuklashda xatolik yuz berdi.</p>';
@@ -180,14 +245,13 @@ function renderMessages(messages) {
 }
 
 async function openRoom(roomId, sectionElement) {
-  currentRoomSection = sectionElement;
-  currentRoomId = roomId;
-
   try {
     const response = await fetch(`/api/rooms/single/${roomId}`);
     const data = await response.json();
 
     if (data.success) {
+      currentRoomSection = sectionElement;
+      currentRoomId = roomId;
       sectionElement.classList.add('hidden');
       roomDetailSection.classList.remove('hidden');
       roomDetailName.textContent = data.room.name;
@@ -198,6 +262,10 @@ async function openRoom(roomId, sectionElement) {
     alert('Xonani yuklashda xatolik yuz berdi.');
   }
 }
+
+socket.on('roomFull', () => {
+  alert('Bu xona to\'la (12/12). Boshqa xonani tanlang.');
+});
 
 socket.on('newMessage', (msg) => {
   if (Number(currentRoomId) === msg.roomId) {
@@ -228,14 +296,34 @@ sendMessageForm.addEventListener('submit', (e) => {
 const categoryCards = document.querySelectorAll('.categoryCard');
 
 categoryCards.forEach((card) => {
-  card.addEventListener('click', () => {
+  card.addEventListener('click', async () => {
     const category = card.dataset.category;
     const sectionId = categoryToSection[category];
     const targetSection = document.getElementById(sectionId);
 
-    homeSection.classList.add('hidden');
-    targetSection.classList.remove('hidden');
-    loadRooms(category, targetSection);
+    try {
+      const response = await fetch('/api/category-enter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: currentUser.phone })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        currentUser = data.user;
+        localStorage.setItem('user', JSON.stringify(data.user));
+        profileDiamonds.textContent = data.user.diamonds;
+
+        homeSection.classList.add('hidden');
+        targetSection.classList.remove('hidden');
+        loadRooms(category, targetSection);
+      } else {
+        alert(data.error);
+      }
+    } catch (error) {
+      alert('Xatolik yuz berdi. Qaytadan urinib ko\'ring.');
+    }
   });
 });
 

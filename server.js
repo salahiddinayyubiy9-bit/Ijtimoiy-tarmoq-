@@ -16,6 +16,10 @@ app.use(express.json());
 
 
 const verificationCodes = {};
+const MAX_ROOM_SIZE = 12;
+const DAILY_DIAMOND_AMOUNT = 15;
+const CATEGORY_ENTRY_COST = 50;
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
 function generateCode() {
   return Math.floor(1000 + Math.random() * 9000).toString();
@@ -74,7 +78,8 @@ app.post('/api/verify-code', async (req, res) => {
       phone: phone,
       diamonds: 500,
       rank: 'Oddiy askar',
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      lastDailyClaim: null
     };
     db.data.users.push(user);
     await db.write();
@@ -82,6 +87,62 @@ app.post('/api/verify-code', async (req, res) => {
   }
 
   res.json({ success: true, isNewUser: false, user: user });
+});
+
+app.post('/api/daily-claim', async (req, res) => {
+  const { phone } = req.body;
+
+  if (!phone) {
+    return res.status(400).json({ error: 'Telefon raqami kiritilmadi' });
+  }
+
+  await db.read();
+
+  const user = db.data.users.find(u => u.phone === phone);
+
+  if (!user) {
+    return res.status(404).json({ error: 'Foydalanuvchi topilmadi' });
+  }
+
+  if (user.lastDailyClaim) {
+    const elapsed = Date.now() - new Date(user.lastDailyClaim).getTime();
+    if (elapsed < ONE_DAY_MS) {
+      const remainingMs = ONE_DAY_MS - elapsed;
+      const remainingHours = Math.ceil(remainingMs / (60 * 60 * 1000));
+      return res.status(400).json({ error: `Yana ${remainingHours} soatdan keyin oling` });
+    }
+  }
+
+  user.diamonds += DAILY_DIAMOND_AMOUNT;
+  user.lastDailyClaim = new Date().toISOString();
+  await db.write();
+
+  res.json({ success: true, user: user });
+});
+
+app.post('/api/category-enter', async (req, res) => {
+  const { phone } = req.body;
+
+  if (!phone) {
+    return res.status(400).json({ error: 'Telefon raqami kiritilmadi' });
+  }
+
+  await db.read();
+
+  const user = db.data.users.find(u => u.phone === phone);
+
+  if (!user) {
+    return res.status(404).json({ error: 'Foydalanuvchi topilmadi' });
+  }
+
+  if (user.diamonds < CATEGORY_ENTRY_COST) {
+    return res.status(400).json({ error: 'Olmosingiz yetarli emas' });
+  }
+
+  user.diamonds -= CATEGORY_ENTRY_COST;
+  await db.write();
+
+  res.json({ success: true, user: user });
 });
 
 app.post('/api/rooms/create', async (req, res) => {
@@ -132,6 +193,28 @@ app.get('/api/rooms/single/:roomId', async (req, res) => {
   res.json({ success: true, room: room });
 });
 
+app.delete('/api/rooms/:roomId', async (req, res) => {
+  const { roomId } = req.params;
+  const { phone } = req.body;
+
+  await db.read();
+
+  const room = db.data.rooms.find(r => r.id === Number(roomId));
+
+  if (!room) {
+    return res.status(404).json({ error: 'Xona topilmadi' });
+  }
+
+  if (room.createdBy !== phone) {
+    return res.status(403).json({ error: 'Faqat xona yaratuvchisi o\'chira oladi' });
+  }
+
+  db.data.rooms = db.data.rooms.filter(r => r.id !== Number(roomId));
+  await db.write();
+
+  res.json({ success: true });
+});
+
 const httpServer = createServer(app);
 const io = new Server(httpServer);
 
@@ -139,7 +222,16 @@ io.on('connection', (socket) => {
   console.log('Yangi foydalanuvchi ulandi:', socket.id);
 
   socket.on('joinRoom', (roomId) => {
-    socket.join(roomId.toString());
+    const roomKey = roomId.toString();
+    const roomInfo = io.sockets.adapter.rooms.get(roomKey);
+    const currentSize = roomInfo ? roomInfo.size : 0;
+
+    if (currentSize >= MAX_ROOM_SIZE) {
+      socket.emit('roomFull');
+      return;
+    }
+
+    socket.join(roomKey);
     console.log(`Socket ${socket.id} xonaga qo'shildi: ${roomId}`);
   });
 

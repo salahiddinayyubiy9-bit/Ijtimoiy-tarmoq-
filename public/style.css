@@ -359,3 +359,18 @@ button:active {
   font-size: 0.9rem;
   font-style: italic;
 }
+.roomItem {
+  position: relative;
+}
+
+.deleteRoomBtn {
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background-color 0.15s;
+}
+
+.deleteRoomBtn:hover {
+  background-color: #2a2e38;
+}
