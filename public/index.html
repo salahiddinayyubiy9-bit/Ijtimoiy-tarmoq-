@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ijtimoiy Tarmoq</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Xush kelibsiz!</h1>
+
+  <div id="authSection">
+    <div id="step1">    
+      <p>Telefon raqamingizni kiriting.</p>
+      <form id="phoneForm">
+        <input type="tel" id="phoneInput" placeholder="+998901234567" required>
+        <button type="submit">Kod yuborish</button>
+      </form>
+    </div>
+
+    <div id="step2" class="hidden">
+      <p>Telefoningizga yuborilgan 4 xonali kodni kiriting.</p>
+      <p id="testCodeDisplay"></p>
+      <form id="codeForm">
+        <input type="text" id="codeInput" placeholder="0000" maxlength="4" required>
+        <button type="submit">Tasdiqlash</button>
+      </form>
+    </div>
+  </div>
+<div id="loggedInSection" class="hidden">
+    <div class="profileCard">
+      <div class="profileAvatar">👤</div>
+      <p class="profilePhone" id="profilePhone"></p>
+      <div class="profileStats">
+        <div class="statBadge diamondBadge">
+          <span class="statIcon">💎</span>
+          <span id="profileDiamonds"></span>
+        </div>
+        <div class="statBadge rankBadge">
+          <span class="statIcon">🏅</span>
+          <span id="profileRank"></span>
+        </div>
+      </div>
+      <button id="logoutBtn">Chiqish</button>
+    </div>
+</div>
+  <p id="message"></p>
+
+  <script src="auth.js"></script>
+</body>
+</html>
