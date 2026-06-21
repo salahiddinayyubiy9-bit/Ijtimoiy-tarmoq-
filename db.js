@@ -8,7 +8,7 @@ const __dirname = path.dirname(__filename);
 
 const file = path.join(__dirname, 'database.json');
 const adapter = new JSONFile(file);
-const defaultData = { users: [] };
+const defaultData = { users: [], rooms: [] };
 const db = new Low(adapter, defaultData);
 
 await db.read();

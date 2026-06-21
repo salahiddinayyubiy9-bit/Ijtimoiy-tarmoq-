@@ -13,8 +13,6 @@ const profilePhone = document.getElementById('profilePhone');
 const profileDiamonds = document.getElementById('profileDiamonds');
 const profileRank = document.getElementById('profileRank');
 const homeSection = document.getElementById('homeSection');
-const lessonsSection = document.getElementById('lessonsSection');
-const backToHomeBtn = document.getElementById('backToHomeBtn');
 
 let currentPhone = '';
 
@@ -96,22 +94,39 @@ logoutBtn.addEventListener('click', () => {
   phoneForm.reset();
 });
 
+const categoryToSection = {
+  tanishuv: 'tanishuvSection',
+  talabalar: 'talabalarSection',
+  oqituvchilar: 'oqituvchilarSection',
+  taqdimotlar: 'taqdimotlarSection',
+  ilmiyishlar: 'ilmiyishlarSection',
+  bepuldarslar: 'lessonsSection',
+  qonun: 'qonunSection',
+  doktorlar: 'doktorlarSection'
+};
+
 const categoryCards = document.querySelectorAll('.categoryCard');
 
 categoryCards.forEach((card) => {
   card.addEventListener('click', () => {
     const category = card.dataset.category;
+    const sectionId = categoryToSection[category];
+    const targetSection = document.getElementById(sectionId);
 
-    if (category === 'bepuldarslar') {
-      homeSection.classList.add('hidden');
-      lessonsSection.classList.remove('hidden');
-    } else {
-      alert(`"${card.querySelector('.categoryName').textContent}" bo'limi tez orada ishga tushadi!`);
-    }
+    homeSection.classList.add('hidden');
+    targetSection.classList.remove('hidden');
   });
 });
 
-backToHomeBtn.addEventListener('click', () => {
-  lessonsSection.classList.add('hidden');
-  homeSection.classList.remove('hidden');
+const backButtons = document.querySelectorAll('.backBtn');
+
+backButtons.forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const category = btn.dataset.back;
+    const sectionId = categoryToSection[category];
+    const targetSection = document.getElementById(sectionId);
+
+    targetSection.classList.add('hidden');
+    homeSection.classList.remove('hidden');
+  });
 });

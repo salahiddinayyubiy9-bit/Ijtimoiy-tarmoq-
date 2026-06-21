@@ -82,6 +82,40 @@ app.post('/api/verify-code', async (req, res) => {
   res.json({ success: true, isNewUser: false, user: user });
 });
 
+app.post('/api/rooms/create', async (req, res) => {
+  const { name, category, phone } = req.body;
+
+  if (!name || !category || !phone) {
+    return res.status(400).json({ error: 'Xona nomi, kategoriya yoki telefon kiritilmadi' });
+  }
+
+  await db.read();
+
+  const room = {
+    id: Date.now(),
+    name: name,
+    category: category,
+    createdBy: phone,
+    createdAt: new Date().toISOString(),
+    messages: []
+  };
+
+  db.data.rooms.push(room);
+  await db.write();
+
+  res.json({ success: true, room: room });
+});
+
+app.get('/api/rooms/:category', async (req, res) => {
+  const { category } = req.params;
+
+  await db.read();
+
+  const rooms = db.data.rooms.filter(r => r.category === category);
+
+  res.json({ success: true, rooms: rooms });
+});
+
 app.listen(PORT, () => {
   console.log(`Server ishga tushdi: http://localhost:${PORT}`);
 });
