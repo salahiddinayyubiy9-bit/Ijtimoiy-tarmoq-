@@ -13,9 +13,17 @@ const profilePhone = document.getElementById('profilePhone');
 const profileDiamonds = document.getElementById('profileDiamonds');
 const profileRank = document.getElementById('profileRank');
 const homeSection = document.getElementById('homeSection');
+const roomDetailSection = document.getElementById('roomDetailSection');
+const roomDetailName = document.getElementById('roomDetailName');
+const messageList = document.getElementById('messageList');
+const sendMessageForm = document.getElementById('sendMessageForm');
+const messageInput = document.getElementById('messageInput');
+const backToRoomListBtn = document.getElementById('backToRoomListBtn');
 
 let currentPhone = '';
 let currentUser = null;
+let currentRoomSection = null;
+let currentRoomId = null;
 
 function showLoggedIn(user) {
   authSection.classList.add('hidden');
@@ -107,7 +115,7 @@ const categoryToSection = {
   doktorlar: 'doktorlarSection'
 };
 
-function renderRooms(rooms, listElement) {
+function renderRooms(rooms, listElement, sectionElement) {
   listElement.innerHTML = '';
 
   if (rooms.length === 0) {
@@ -122,6 +130,9 @@ function renderRooms(rooms, listElement) {
       <span class="roomName">${room.name}</span>
       <span class="roomCreator">${room.createdBy}</span>
     `;
+    item.addEventListener('click', () => {
+      openRoom(room.id, sectionElement);
+    });
     listElement.appendChild(item);
   });
 }
@@ -134,12 +145,88 @@ async function loadRooms(category, sectionElement) {
     const data = await response.json();
 
     if (data.success) {
-      renderRooms(data.rooms, listElement);
+      renderRooms(data.rooms, listElement, sectionElement);
     }
   } catch (error) {
     listElement.innerHTML = '<p class="emptyRoomsText">Xonalarni yuklashda xatolik yuz berdi.</p>';
   }
 }
+
+function renderMessages(messages) {
+  messageList.innerHTML = '';
+
+  if (messages.length === 0) {
+    messageList.innerHTML = '<p class="emptyMessagesText">Hali xabarlar yo\'q. Birinchi bo\'lib yozing!</p>';
+    return;
+  }
+
+  messages.forEach((msg) => {
+    const bubble = document.createElement('div');
+    const isOwn = msg.sender === currentUser.phone;
+    bubble.className = isOwn ? 'messageBubble own' : 'messageBubble';
+    bubble.innerHTML = `
+      <p class="messageSender">${msg.sender}</p>
+      <p class="messageText">${msg.text}</p>
+    `;
+    messageList.appendChild(bubble);
+  });
+
+  messageList.scrollTop = messageList.scrollHeight;
+}
+
+async function openRoom(roomId, sectionElement) {
+  currentRoomSection = sectionElement;
+  currentRoomId = roomId;
+
+  try {
+    const response = await fetch(`/api/rooms/single/${roomId}`);
+    const data = await response.json();
+
+    if (data.success) {
+      sectionElement.classList.add('hidden');
+      roomDetailSection.classList.remove('hidden');
+      roomDetailName.textContent = data.room.name;
+      renderMessages(data.room.messages);
+    }
+  } catch (error) {
+    alert('Xonani yuklashda xatolik yuz berdi.');
+  }
+}
+
+backToRoomListBtn.addEventListener('click', () => {
+  roomDetailSection.classList.add('hidden');
+  if (currentRoomSection) {
+    currentRoomSection.classList.remove('hidden');
+  }
+});
+
+sendMessageForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const text = messageInput.value;
+
+  try {
+    const response = await fetch(`/api/rooms/${currentRoomId}/message`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: text, phone: currentUser.phone })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      messageInput.value = '';
+      const roomResponse = await fetch(`/api/rooms/single/${currentRoomId}`);
+      const roomData = await roomResponse.json();
+      if (roomData.success) {
+        renderMessages(roomData.room.messages);
+      }
+    } else {
+      alert(data.error);
+    }
+  } catch (error) {
+    alert('Xabar yuborishda xatolik yuz berdi.');
+  }
+});
 
 const categoryCards = document.querySelectorAll('.categoryCard');
 
@@ -158,6 +245,8 @@ categoryCards.forEach((card) => {
 const backButtons = document.querySelectorAll('.backBtn');
 
 backButtons.forEach((btn) => {
+  if (btn.id === 'backToRoomListBtn') return;
+
   btn.addEventListener('click', () => {
     const category = btn.dataset.back;
     const sectionId = categoryToSection[category];

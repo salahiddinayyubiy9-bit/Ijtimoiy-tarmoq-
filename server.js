@@ -116,6 +116,49 @@ app.get('/api/rooms/:category', async (req, res) => {
   res.json({ success: true, rooms: rooms });
 });
 
+app.get('/api/rooms/single/:roomId', async (req, res) => {
+  const { roomId } = req.params;
+
+  await db.read();
+
+  const room = db.data.rooms.find(r => r.id === Number(roomId));
+
+  if (!room) {
+    return res.status(404).json({ error: 'Xona topilmadi' });
+  }
+
+  res.json({ success: true, room: room });
+});
+
+app.post('/api/rooms/:roomId/message', async (req, res) => {
+  const { roomId } = req.params;
+  const { text, phone } = req.body;
+
+  if (!text || !phone) {
+    return res.status(400).json({ error: 'Xabar matni yoki telefon kiritilmadi' });
+  }
+
+  await db.read();
+
+  const room = db.data.rooms.find(r => r.id === Number(roomId));
+
+  if (!room) {
+    return res.status(404).json({ error: 'Xona topilmadi' });
+  }
+
+  const newMessage = {
+    id: Date.now(),
+    text: text,
+    sender: phone,
+    sentAt: new Date().toISOString()
+  };
+
+  room.messages.push(newMessage);
+  await db.write();
+
+  res.json({ success: true, message: newMessage });
+});
+
 app.listen(PORT, () => {
   console.log(`Server ishga tushdi: http://localhost:${PORT}`);
 });

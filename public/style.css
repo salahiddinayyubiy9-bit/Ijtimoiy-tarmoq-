@@ -308,4 +308,54 @@ button:active {
   color: #6b7280;
   font-size: 0.9rem;
   font-style: italic;
+
+}
+
+.messageList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 360px;
+  max-height: 400px;
+  overflow-y: auto;
+  margin-bottom: 16px;
+}
+
+.messageBubble {
+  background-color: #1a1d24;
+  border: 1px solid #2a2e38;
+  border-radius: 10px;
+  padding: 10px 14px;
+  align-self: flex-start;
+  max-width: 80%;
+}
+
+.messageBubble.own {
+  background-color: #5865F2;
+  align-self: flex-end;
+}
+
+.messageSender {
+  color: #6b7280;
+  font-size: 0.75rem;
+  margin-bottom: 4px;
+}
+
+.messageBubble.own .messageSender {
+  color: #d1d5db;
+}
+
+.messageText {
+  color: #e8e8e8;
+  font-size: 0.95rem;
+}
+
+.messageBubble.own .messageText {
+  color: #ffffff;
+}
+
+.emptyMessagesText {
+  color: #6b7280;
+  font-size: 0.9rem;
+  font-style: italic;
 }
