@@ -168,9 +168,78 @@
       <button id="backToRoomListBtn" class="backBtn">← Orqaga</button>
       <h2 class="sectionTitle" id="roomDetailName"></h2>
       <div class="messageList" id="messageList"></div>
+
+      <div id="mediaPanel" class="hidden">
+        <div id="emojiPanel" class="hidden mediaSubPanel">
+          <span class="emojiItem">😊</span>
+          <span class="emojiItem">😂</span>
+          <span class="emojiItem">❤️</span>
+          <span class="emojiItem">👍</span>
+          <span class="emojiItem">👎</span>
+          <span class="emojiItem">🔥</span>
+          <span class="emojiItem">😢</span>
+          <span class="emojiItem">😮</span>
+          <span class="emojiItem">🎉</span>
+          <span class="emojiItem">😎</span>
+          <span class="emojiItem">🙏</span>
+          <span class="emojiItem">💪</span>
+          <span class="emojiItem">😍</span>
+          <span class="emojiItem">🤔</span>
+          <span class="emojiItem">😴</span>
+          <span class="emojiItem">🥳</span>
+          <span class="emojiItem">😡</span>
+          <span class="emojiItem">🤣</span>
+          <span class="emojiItem">👏</span>
+          <span class="emojiItem">✅</span>
+          <span class="emojiItem">❌</span>
+          <span class="emojiItem">💯</span>
+          <span class="emojiItem">🎯</span>
+          <span class="emojiItem">🚀</span>
+          <span class="emojiItem">💎</span>
+          <span class="emojiItem">⭐</span>
+          <span class="emojiItem">🌟</span>
+          <span class="emojiItem">😏</span>
+          <span class="emojiItem">🤝</span>
+          <span class="emojiItem">👋</span>
+        </div>
+
+        <div id="stickerPanel" class="hidden mediaSubPanel">
+          <span class="stickerItem" data-sticker="🎉">🎉</span>
+          <span class="stickerItem" data-sticker="🏆">🏆</span>
+          <span class="stickerItem" data-sticker="💖">💖</span>
+          <span class="stickerItem" data-sticker="🌈">🌈</span>
+          <span class="stickerItem" data-sticker="🎸">🎸</span>
+          <span class="stickerItem" data-sticker="🦁">🦁</span>
+          <span class="stickerItem" data-sticker="🐉">🐉</span>
+          <span class="stickerItem" data-sticker="👑">👑</span>
+          <span class="stickerItem" data-sticker="🎭">🎭</span>
+          <span class="stickerItem" data-sticker="🌙">🌙</span>
+        </div>
+
+        <div id="gifPanel" class="hidden mediaSubPanel">
+          <img class="gifItem" src="https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif" alt="kulgich">
+          <img class="gifItem" src="https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif" alt="ha">
+          <img class="gifItem" src="https://media.giphy.com/media/3ohzdIuqJoo8QdKlnW/giphy.gif" alt="yoq">
+          <img class="gifItem" src="https://media.giphy.com/media/l4FGGafcOHmrlQxG0/giphy.gif" alt="tabriklash">
+          <img class="gifItem" src="https://media.giphy.com/media/l0HlvtIPzPdt2usKs/giphy.gif" alt="qarsak">
+          <img class="gifItem" src="https://media.giphy.com/media/l4FGni1RBAR2OWsGk/giphy.gif" alt="yigʻlash">
+          <img class="gifItem" src="https://media.giphy.com/media/3oEjHAUOqG3lSS0f1C/giphy.gif" alt="hayron">
+          <img class="gifItem" src="https://media.giphy.com/media/xT9IgG50Lg7russbDa/giphy.gif" alt="uyqu">
+          <img class="gifItem" src="https://media.giphy.com/media/l0HlBO7eyXzSZkJri/giphy.gif" alt="oylash">
+          <img class="gifItem" src="https://media.giphy.com/media/3oKIPnAiaMCws8nkwE/giphy.gif" alt="xayr">
+        </div>
+      </div>
+
       <form id="sendMessageForm">
-        <input type="text" id="messageInput" placeholder="Xabar yozing..." required>
-        <button type="submit">Yuborish</button>
+        <div class="messageToolbar">
+          <button type="button" id="emojiBtn">😊</button>
+          <button type="button" id="stickerBtn">🖼️</button>
+          <button type="button" id="gifBtn">GIF</button>
+        </div>
+        <div class="messageInputRow">
+          <input type="text" id="messageInput" placeholder="Xabar yozing...">
+          <button type="submit">Yuborish</button>
+        </div>
       </form>
     </div>
   </div>

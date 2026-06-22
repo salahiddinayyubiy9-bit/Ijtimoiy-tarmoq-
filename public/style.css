@@ -22,6 +22,7 @@ p {
   color: #b0b3b8;
   font-size: 1rem;
 }
+
 form {
   margin-top: 24px;
   display: flex;
@@ -73,6 +74,7 @@ button:active {
   margin-top: 16px;
   font-weight: 500;
 }
+
 .hidden {
   display: none;
 }
@@ -92,6 +94,7 @@ button:active {
 .switchText a:hover {
   text-decoration: underline;
 }
+
 .profileCard {
   background-color: #1a1d24;
   border: 1px solid #2a2e38;
@@ -152,6 +155,7 @@ button:active {
 .statIcon {
   font-size: 1.1rem;
 }
+
 .sectionTitle {
   color: #ffffff;
   font-size: 1.3rem;
@@ -197,6 +201,7 @@ button:active {
   font-weight: 600;
   text-align: center;
 }
+
 .backBtn {
   background-color: transparent;
   color: #5865F2;
@@ -245,6 +250,7 @@ button:active {
   font-size: 0.95rem;
   font-weight: 500;
 }
+
 .createRoomForm {
   margin-top: 0;
   margin-bottom: 20px;
@@ -287,6 +293,7 @@ button:active {
   align-items: center;
   cursor: pointer;
   transition: border-color 0.15s;
+  position: relative;
 }
 
 .roomItem:hover {
@@ -308,7 +315,18 @@ button:active {
   color: #6b7280;
   font-size: 0.9rem;
   font-style: italic;
+}
 
+.deleteRoomBtn {
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background-color 0.15s;
+}
+
+.deleteRoomBtn:hover {
+  background-color: #2a2e38;
 }
 
 .messageList {
@@ -359,18 +377,114 @@ button:active {
   font-size: 0.9rem;
   font-style: italic;
 }
-.roomItem {
-  position: relative;
+
+.messageToolbar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
-.deleteRoomBtn {
+.messageToolbar button {
+  background-color: #1a1d24;
+  border: 1px solid #2a2e38;
+  border-radius: 8px;
+  padding: 8px 12px;
   font-size: 1.1rem;
   cursor: pointer;
-  padding: 4px 8px;
+  transition: border-color 0.15s;
+}
+
+.messageToolbar button:hover {
+  border-color: #5865F2;
+  background-color: #1a1d24;
+}
+
+.messageInputRow {
+  display: flex;
+  gap: 8px;
+}
+
+.messageInputRow input {
+  background-color: #1a1d24;
+  border: 1px solid #2a2e38;
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: #e8e8e8;
+  font-size: 1rem;
+  flex: 1;
+  outline: none;
+}
+
+.messageInputRow input:focus {
+  border-color: #5865F2;
+}
+
+.messageInputRow input::placeholder {
+  color: #6b7280;
+}
+
+#mediaPanel {
+  background-color: #1a1d24;
+  border: 1px solid #2a2e38;
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 8px;
+  max-width: 360px;
+}
+
+.mediaSubPanel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.emojiItem {
+  font-size: 1.6rem;
+  cursor: pointer;
+  padding: 4px;
   border-radius: 6px;
   transition: background-color 0.15s;
 }
 
-.deleteRoomBtn:hover {
+.emojiItem:hover {
   background-color: #2a2e38;
+}
+
+.stickerItem {
+  font-size: 2.5rem;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  transition: background-color 0.15s;
+}
+
+.stickerItem:hover {
+  background-color: #2a2e38;
+}
+
+.gifItem {
+  width: 120px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color 0.15s;
+}
+
+.gifItem:hover {
+  border-color: #5865F2;
+}
+
+.messageSticker {
+  font-size: 4rem;
+  display: block;
+  line-height: 1.2;
+  margin: 4px 0;
+}
+
+.messageGif {
+  max-width: 200px;
+  border-radius: 8px;
+  display: block;
 }

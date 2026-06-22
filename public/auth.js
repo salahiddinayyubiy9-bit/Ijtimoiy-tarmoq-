@@ -22,6 +22,13 @@ const sendMessageForm = document.getElementById('sendMessageForm');
 const messageInput = document.getElementById('messageInput');
 const backToRoomListBtn = document.getElementById('backToRoomListBtn');
 const dailyClaimBtn = document.getElementById('dailyClaimBtn');
+const mediaPanel = document.getElementById('mediaPanel');
+const emojiPanel = document.getElementById('emojiPanel');
+const stickerPanel = document.getElementById('stickerPanel');
+const gifPanel = document.getElementById('gifPanel');
+const emojiBtn = document.getElementById('emojiBtn');
+const stickerBtn = document.getElementById('stickerBtn');
+const gifBtn = document.getElementById('gifBtn');
 
 let currentPhone = '';
 let currentUser = null;
@@ -223,10 +230,24 @@ function appendMessage(msg) {
   const bubble = document.createElement('div');
   const isOwn = msg.sender === currentUser.phone;
   bubble.className = isOwn ? 'messageBubble own' : 'messageBubble';
+
+  let contentHtml = '';
+
+  if (msg.text.startsWith('[sticker:') && msg.text.endsWith(']')) {
+    const sticker = msg.text.slice(9, -1);
+    contentHtml = `<span class="messageSticker">${sticker}</span>`;
+  } else if (msg.text.startsWith('[gif:') && msg.text.endsWith(']')) {
+    const gifUrl = msg.text.slice(5, -1);
+    contentHtml = `<img class="messageGif" src="${gifUrl}" alt="gif">`;
+  } else {
+    contentHtml = `<p class="messageText">${msg.text}</p>`;
+  }
+
   bubble.innerHTML = `
     <p class="messageSender">${msg.sender}</p>
-    <p class="messageText">${msg.text}</p>
+    ${contentHtml}
   `;
+
   messageList.appendChild(bubble);
   messageList.scrollTop = messageList.scrollHeight;
 }
@@ -263,6 +284,66 @@ async function openRoom(roomId, sectionElement) {
   }
 }
 
+function closeAllPanels() {
+  mediaPanel.classList.add('hidden');
+  emojiPanel.classList.add('hidden');
+  stickerPanel.classList.add('hidden');
+  gifPanel.classList.add('hidden');
+}
+
+function togglePanel(panel) {
+  const isHidden = panel.classList.contains('hidden');
+  closeAllPanels();
+  if (isHidden) {
+    mediaPanel.classList.remove('hidden');
+    panel.classList.remove('hidden');
+  }
+}
+
+emojiBtn.addEventListener('click', () => {
+  togglePanel(emojiPanel);
+});
+
+stickerBtn.addEventListener('click', () => {
+  togglePanel(stickerPanel);
+});
+
+gifBtn.addEventListener('click', () => {
+  togglePanel(gifPanel);
+});
+
+document.querySelectorAll('.emojiItem').forEach((item) => {
+  item.addEventListener('click', () => {
+    messageInput.value += item.textContent;
+    closeAllPanels();
+    messageInput.focus();
+  });
+});
+
+document.querySelectorAll('.stickerItem').forEach((item) => {
+  item.addEventListener('click', () => {
+    const sticker = item.dataset.sticker;
+    socket.emit('sendMessage', {
+      roomId: currentRoomId,
+      text: `[sticker:${sticker}]`,
+      phone: currentUser.phone
+    });
+    closeAllPanels();
+  });
+});
+
+document.querySelectorAll('.gifItem').forEach((item) => {
+  item.addEventListener('click', () => {
+    const gifUrl = item.src;
+    socket.emit('sendMessage', {
+      roomId: currentRoomId,
+      text: `[gif:${gifUrl}]`,
+      phone: currentUser.phone
+    });
+    closeAllPanels();
+  });
+});
+
 socket.on('roomFull', () => {
   alert('Bu xona to\'la (12/12). Boshqa xonani tanlang.');
 });
@@ -275,6 +356,7 @@ socket.on('newMessage', (msg) => {
 
 backToRoomListBtn.addEventListener('click', () => {
   roomDetailSection.classList.add('hidden');
+  closeAllPanels();
   if (currentRoomSection) {
     currentRoomSection.classList.remove('hidden');
   }
@@ -283,6 +365,7 @@ backToRoomListBtn.addEventListener('click', () => {
 sendMessageForm.addEventListener('submit', (e) => {
   e.preventDefault();
   const text = messageInput.value;
+  if (!text.trim()) return;
 
   socket.emit('sendMessage', {
     roomId: currentRoomId,
