@@ -1,17 +1,13 @@
-import { Low } from 'lowdb';
-import { JSONFile } from 'lowdb/node';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import mongoose from "mongoose";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const file = path.join(__dirname, 'database.json');
-const adapter = new JSONFile(file);
-const defaultData = { users: [], rooms: [] };
-const db = new Low(adapter, defaultData);
-
-await db.read();
-await db.write();
-
-export default db;
+export const connectDB = async () => {
+  try {
+    await mongoose.connect(
+      "mongodb+srv://salahiddinayyubiy9_db_user:xKBs6k2scr5rW3gk@ijtimoiy-tarmoq.yktrrmf.mongodb.net/ijtimoiy_tarmoq?retryWrites=true&w=majority"
+    );
+    console.log("✅ MongoDB ulandi!");
+  } catch (err) {
+    console.log("❌ MongoDB xato:", err.message);
+    process.exit(1);
+  }
+};
