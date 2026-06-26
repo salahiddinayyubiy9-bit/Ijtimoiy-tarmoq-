@@ -4,6 +4,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 
 import { connectDB } from "./db.js";
 import User from "./models/User.js";
@@ -13,7 +15,24 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
+
+app.use(helmet({ contentSecurityPolicy: false }));
+
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: { error: 'Juda ko\'p so\'rov yuborildi. 15 daqiqadan keyin qaytadan urinib ko\'ring.' }
+});
+
+const codeLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 3,
+  message: { error: 'Juda ko\'p kod so\'rovi. 1 daqiqadan keyin qaytadan urinib ko\'ring.' }
+});
+
+app.use(generalLimiter);
+app.use('/api/send-code', codeLimiter);
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
