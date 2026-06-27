@@ -102,7 +102,6 @@ app.post('/api/setup-profile', async (req, res) => {
       { nickname: nickname, username: username || null },
       { new: true }
     );
-    localStorage_user = user;
     res.json({ success: true, user: user });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -208,8 +207,6 @@ app.delete('/api/rooms/:roomId', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
-// CONVERSATION API'LAR
 
 app.post('/api/conversations/create', async (req, res) => {
   const { type, name, phone, isPublic, targetPhone, targetUsername } = req.body;
