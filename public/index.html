@@ -7,154 +7,196 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Xush kelibsiz!</h1>
 
+  <!-- AUTH SAHIFASI -->
   <div id="authSection">
-    <div id="step1">
-      <p>Telefon raqamingizni kiriting.</p>
-      <form id="phoneForm">
-        <input type="tel" id="phoneInput" placeholder="+998901234567" required>
-        <button type="submit">Kod yuborish</button>
-      </form>
-    </div>
+    <div class="authCard">
+      <h1 class="authTitle">Xush kelibsiz!</h1>
 
-    <div id="step2" class="hidden">
-      <p>Telefoningizga yuborilgan 4 xonali kodni kiriting.</p>
-      <p id="testCodeDisplay"></p>
-      <form id="codeForm">
-        <input type="text" id="codeInput" placeholder="0000" maxlength="4" required>
-        <button type="submit">Tasdiqlash</button>
-      </form>
-    </div>
-  </div>
-
-  <div id="loggedInSection" class="hidden">
-    <div class="profileCard">
-      <div class="profileAvatar">👤</div>
-      <p class="profilePhone" id="profilePhone"></p>
-      <div class="profileStats">
-        <div class="statBadge diamondBadge">
-          <span class="statIcon">💎</span>
-          <span id="profileDiamonds"></span>
+      <!-- STEP 1: Telefon -->
+      <div id="step1">
+        <p class="authSubtitle">Telefon raqamingizni kiriting</p>
+        <div class="phoneInputGroup">
+          <div class="countrySelector" id="countrySelector">
+            <span id="countryFlag">🇺🇿</span>
+            <span id="countryCode">+998</span>
+            <span class="countryCaret">▾</span>
+          </div>
+          <input type="tel" id="phoneInput" placeholder="901234567">
         </div>
-        <div class="statBadge rankBadge">
-          <span class="statIcon">🏅</span>
-          <span id="profileRank"></span>
+        <div class="countryDropdown hidden" id="countryDropdown">
+          <div class="countryOption" data-code="+998" data-flag="🇺🇿">🇺🇿 O'zbekiston +998</div>
+          <div class="countryOption" data-code="+7" data-flag="🇷🇺">🇷🇺 Rossiya +7</div>
+          <div class="countryOption" data-code="+7" data-flag="🇰🇿">🇰🇿 Qozog'iston +7</div>
+          <div class="countryOption" data-code="+996" data-flag="🇰🇬">🇰🇬 Qirg'iziston +996</div>
+          <div class="countryOption" data-code="+992" data-flag="🇹🇯">🇹🇯 Tojikiston +992</div>
+          <div class="countryOption" data-code="+966" data-flag="🇸🇦">🇸🇦 Saudiya Arabistoni +966</div>
         </div>
+        <button class="authBtn" id="sendCodeBtn">Kod yuborish</button>
+        <p id="authMessage" class="authError hidden"></p>
       </div>
-      <button id="dailyClaimBtn">🎁 Kunlik olmos olish</button>
-      <button id="logoutBtn">Chiqish</button>
-    </div>
 
-    <div id="homeSection">
-      <h2 class="sectionTitle">Kategoriyalar</h2>
-      <div class="categoryGrid">
-        <div class="categoryCard" data-category="tanishuv">
-          <span class="categoryIcon">💬</span>
-          <span class="categoryName">Tanishuv-chat</span>
+      <!-- STEP 2: Kod -->
+      <div id="step2" class="hidden">
+        <p class="authSubtitle">4 xonali kodni kiriting</p>
+        <p id="testCodeDisplay" class="testCode"></p>
+        <div class="codeInputGroup">
+          <input type="tel" class="codeDigit" maxlength="1" id="code1">
+          <input type="tel" class="codeDigit" maxlength="1" id="code2">
+          <input type="tel" class="codeDigit" maxlength="1" id="code3">
+          <input type="tel" class="codeDigit" maxlength="1" id="code4">
         </div>
-        <div class="categoryCard" data-category="talabalar">
-          <span class="categoryIcon">🎓</span>
-          <span class="categoryName">Talabalar</span>
-        </div>
-        <div class="categoryCard" data-category="oqituvchilar">
-          <span class="categoryIcon">📚</span>
-          <span class="categoryName">O'qituvchilar</span>
-        </div>
-        <div class="categoryCard" data-category="taqdimotlar">
-          <span class="categoryIcon">🖥️</span>
-          <span class="categoryName">Taqdimotlar</span>
-        </div>
-        <div class="categoryCard" data-category="ilmiyishlar">
-          <span class="categoryIcon">🔬</span>
-          <span class="categoryName">Ilmiy ishlar</span>
-        </div>
-        <div class="categoryCard" data-category="bepuldarslar">
-          <span class="categoryIcon">🆓</span>
-          <span class="categoryName">Bepul darslar</span>
-        </div>
-        <div class="categoryCard" data-category="qonun">
-          <span class="categoryIcon">⚖️</span>
-          <span class="categoryName">Qonun masalalari</span>
-        </div>
-        <div class="categoryCard" data-category="doktorlar">
-          <span class="categoryIcon">🩺</span>
-          <span class="categoryName">Doktorlar</span>
-        </div>
+        <button class="authBtn" id="verifyCodeBtn">Tasdiqlash</button>
+        <button class="authBackBtn" id="backToStep1">← Orqaga</button>
+        <p id="codeMessage" class="authError hidden"></p>
       </div>
-    </div>
 
-    <!-- KATEGORIYA SAHIFASI -->
-    <div id="categoryPage" class="hidden fullPage">
-      <div class="fullPageHeader">
-        <button class="headerBackBtn" id="categoryBackBtn">← Chiqish</button>
-        <h2 class="headerTitle" id="categoryPageTitle"></h2>
-        <div class="headerRight">
-          <span class="headerDiamonds">💎 <span id="categoryPageDiamonds"></span></span>
-          <span class="headerRoomCount">🚪 <span id="categoryPageRoomCount"></span></span>
-        </div>
-      </div>
-      <div class="fullPageContent">
-        <form class="createRoomForm" id="categoryCreateRoomForm">
-          <input type="text" class="roomNameInput" id="categoryRoomNameInput" placeholder="Yangi xona nomi" required>
-          <button type="submit">Yaratish</button>
-        </form>
-        <div class="roomList" id="categoryRoomList"></div>
+      <!-- STEP 3: Profil sozlash (yangi foydalanuvchi) -->
+      <div id="step3" class="hidden">
+        <p class="authSubtitle">Profilingizni sozlang</p>
+        <input type="text" class="authInput" id="nicknameInput" placeholder="Ismingiz (majburiy)" maxlength="30">
+        <input type="text" class="authInput" id="usernameInput" placeholder="@username (ixtiyoriy)" maxlength="20">
+        <button class="authBtn" id="setupProfileBtn">Davom etish</button>
+        <p id="profileMessage" class="authError hidden"></p>
       </div>
     </div>
   </div>
 
-  <!-- XONA SAHIFASI — loggedInSection tashqarisida -->
+  <!-- ASOSIY SAHIFA -->
+  <div id="mainSection" class="hidden">
+
+    <!-- PASTKI NAVIGATSIYA -->
+    <nav class="bottomNav" id="bottomNav">
+      <button class="navBtn" id="navGroups" data-tab="groups">
+        <span class="navIcon">👥</span>
+        <span class="navLabel">Guruhlar</span>
+      </button>
+      <button class="navBtn active" id="navChats" data-tab="chats">
+        <span class="navIcon">💬</span>
+        <span class="navLabel">Chatlar</span>
+      </button>
+      <button class="navBtn" id="navChannels" data-tab="channels">
+        <span class="navIcon">📢</span>
+        <span class="navLabel">Kanallar</span>
+      </button>
+    </nav>
+
+    <!-- BOSH EKRAN (profil + kategoriyalar) -->
+    <div id="homeTab" class="tabContent">
+      <div class="profileCard">
+        <div class="profileAvatarWrap">
+          <div class="profileAvatar" id="profileAvatar">👤</div>
+        </div>
+        <div class="profileInfo">
+          <p class="profileNickname" id="profileNickname"></p>
+          <p class="profilePhone" id="profilePhone"></p>
+        </div>
+        <div class="profileStats">
+          <div class="statBadge diamondBadge">
+            <span class="statIcon">💎</span>
+            <span id="profileDiamonds"></span>
+          </div>
+          <div class="statBadge rankBadge">
+            <span class="statIcon">🏅</span>
+            <span id="profileRank"></span>
+          </div>
+        </div>
+        <div class="profileBtns">
+          <button id="dailyClaimBtn">🎁 Kunlik olmos</button>
+          <button id="logoutBtn" class="logoutBtn">Chiqish</button>
+        </div>
+      </div>
+
+      <div id="homeSection">
+        <h2 class="sectionTitle">Kategoriyalar</h2>
+        <div class="categoryGrid">
+          <div class="categoryCard" data-category="tanishuv"><span class="categoryIcon">💬</span><span class="categoryName">Tanishuv-chat</span></div>
+          <div class="categoryCard" data-category="talabalar"><span class="categoryIcon">🎓</span><span class="categoryName">Talabalar</span></div>
+          <div class="categoryCard" data-category="oqituvchilar"><span class="categoryIcon">📚</span><span class="categoryName">O'qituvchilar</span></div>
+          <div class="categoryCard" data-category="taqdimotlar"><span class="categoryIcon">🖥️</span><span class="categoryName">Taqdimotlar</span></div>
+          <div class="categoryCard" data-category="ilmiyishlar"><span class="categoryIcon">🔬</span><span class="categoryName">Ilmiy ishlar</span></div>
+          <div class="categoryCard" data-category="bepuldarslar"><span class="categoryIcon">🆓</span><span class="categoryName">Bepul darslar</span></div>
+          <div class="categoryCard" data-category="qonun"><span class="categoryIcon">⚖️</span><span class="categoryName">Qonun masalalari</span></div>
+          <div class="categoryCard" data-category="doktorlar"><span class="categoryIcon">🩺</span><span class="categoryName">Doktorlar</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHATLAR TAB -->
+    <div id="chatsTab" class="tabContent hidden">
+      <div class="tabHeader">
+        <h2 class="tabTitle">Chatlar</h2>
+        <button class="tabAddBtn" id="newChatBtn">+</button>
+      </div>
+      <div class="convList" id="chatsList"></div>
+    </div>
+
+    <!-- GURUHLAR TAB -->
+    <div id="groupsTab" class="tabContent hidden">
+      <div class="tabHeader">
+        <h2 class="tabTitle">Guruhlar</h2>
+        <button class="tabAddBtn" id="newGroupBtn">+</button>
+      </div>
+      <div class="convList" id="groupsList"></div>
+    </div>
+
+    <!-- KANALLAR TAB -->
+    <div id="channelsTab" class="tabContent hidden">
+      <div class="tabHeader">
+        <h2 class="tabTitle">Kanallar</h2>
+        <button class="tabAddBtn" id="newChannelBtn">+</button>
+      </div>
+      <div class="convList" id="channelsList"></div>
+    </div>
+  </div>
+
+  <!-- TO'LIQ EKRANLI SAHIFALAR -->
+
+  <!-- KATEGORIYA SAHIFASI -->
+  <div id="categoryPage" class="hidden fullPage">
+    <div class="fullPageHeader">
+      <button class="headerBackBtn" id="categoryBackBtn">← Chiqish</button>
+      <h2 class="headerTitle" id="categoryPageTitle"></h2>
+      <div class="headerRight">
+        <span class="headerDiamonds">💎 <span id="categoryPageDiamonds"></span></span>
+        <span class="headerRoomCount">🚪 <span id="categoryPageRoomCount"></span></span>
+      </div>
+    </div>
+    <div class="fullPageContent">
+      <form class="createRoomForm" id="categoryCreateRoomForm">
+        <input type="text" class="roomNameInput" id="categoryRoomNameInput" placeholder="Yangi xona nomi" required>
+        <button type="submit">Yaratish</button>
+      </form>
+      <div class="roomList" id="categoryRoomList"></div>
+    </div>
+  </div>
+
+  <!-- XONA SAHIFASI -->
   <div id="roomPage" class="hidden fullPage">
     <div class="fullPageHeader">
       <button class="headerBackBtn" id="roomBackBtn">← Yopish</button>
       <div class="roomHeaderInfo">
         <span class="roomHeaderName" id="roomPageName"></span>
-        <span class="roomHeaderMeta">
-          👥 <span id="roomPageCount">0</span> |
-          🏅 <span id="roomPageCreatorRank"></span>
-        </span>
+        <span class="roomHeaderMeta">👥 <span id="roomPageCount">0</span> | 🏅 <span id="roomPageCreatorRank"></span></span>
       </div>
       <div class="headerRight">
         <span class="myRankBadge">🏅 <span id="roomPageMyRank"></span></span>
         <button class="deleteRoomPageBtn hidden" id="roomDeleteBtn">🗑️</button>
       </div>
     </div>
-
     <div class="roomMessages" id="roomPageMessages"></div>
-
     <div id="roomMediaPanel" class="hidden">
       <div id="roomEmojiPanel" class="hidden mediaSubPanel">
-        <span class="emojiItem">😊</span>
-        <span class="emojiItem">😂</span>
-        <span class="emojiItem">❤️</span>
-        <span class="emojiItem">👍</span>
-        <span class="emojiItem">👎</span>
-        <span class="emojiItem">🔥</span>
-        <span class="emojiItem">😢</span>
-        <span class="emojiItem">😮</span>
-        <span class="emojiItem">🎉</span>
-        <span class="emojiItem">😎</span>
-        <span class="emojiItem">🙏</span>
-        <span class="emojiItem">💪</span>
-        <span class="emojiItem">😍</span>
-        <span class="emojiItem">🤔</span>
-        <span class="emojiItem">😴</span>
-        <span class="emojiItem">🥳</span>
-        <span class="emojiItem">😡</span>
-        <span class="emojiItem">🤣</span>
-        <span class="emojiItem">👏</span>
-        <span class="emojiItem">✅</span>
-        <span class="emojiItem">❌</span>
-        <span class="emojiItem">💯</span>
-        <span class="emojiItem">🎯</span>
-        <span class="emojiItem">🚀</span>
-        <span class="emojiItem">💎</span>
-        <span class="emojiItem">⭐</span>
-        <span class="emojiItem">🌟</span>
-        <span class="emojiItem">😏</span>
-        <span class="emojiItem">🤝</span>
-        <span class="emojiItem">👋</span>
+        <span class="emojiItem">😊</span><span class="emojiItem">😂</span><span class="emojiItem">❤️</span>
+        <span class="emojiItem">👍</span><span class="emojiItem">👎</span><span class="emojiItem">🔥</span>
+        <span class="emojiItem">😢</span><span class="emojiItem">😮</span><span class="emojiItem">🎉</span>
+        <span class="emojiItem">😎</span><span class="emojiItem">🙏</span><span class="emojiItem">💪</span>
+        <span class="emojiItem">😍</span><span class="emojiItem">🤔</span><span class="emojiItem">😴</span>
+        <span class="emojiItem">🥳</span><span class="emojiItem">😡</span><span class="emojiItem">🤣</span>
+        <span class="emojiItem">👏</span><span class="emojiItem">✅</span><span class="emojiItem">❌</span>
+        <span class="emojiItem">💯</span><span class="emojiItem">🎯</span><span class="emojiItem">🚀</span>
+        <span class="emojiItem">💎</span><span class="emojiItem">⭐</span><span class="emojiItem">🌟</span>
+        <span class="emojiItem">😏</span><span class="emojiItem">🤝</span><span class="emojiItem">👋</span>
       </div>
       <div id="roomStickerPanel" class="hidden mediaSubPanel">
         <span class="stickerItem" data-sticker="🎉">🎉</span>
@@ -169,19 +211,18 @@
         <span class="stickerItem" data-sticker="🌙">🌙</span>
       </div>
       <div id="roomGifPanel" class="hidden mediaSubPanel">
-        <img class="gifItem" src="https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif" alt="kulgich">
-        <img class="gifItem" src="https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif" alt="ha">
-        <img class="gifItem" src="https://media.giphy.com/media/3ohzdIuqJoo8QdKlnW/giphy.gif" alt="yoq">
-        <img class="gifItem" src="https://media.giphy.com/media/l4FGGafcOHmrlQxG0/giphy.gif" alt="tabriklash">
-        <img class="gifItem" src="https://media.giphy.com/media/l0HlvtIPzPdt2usKs/giphy.gif" alt="qarsak">
-        <img class="gifItem" src="https://media.giphy.com/media/l4FGni1RBAR2OWsGk/giphy.gif" alt="yigʻlash">
-        <img class="gifItem" src="https://media.giphy.com/media/3oEjHAUOqG3lSS0f1C/giphy.gif" alt="hayron">
-        <img class="gifItem" src="https://media.giphy.com/media/xT9IgG50Lg7russbDa/giphy.gif" alt="uyqu">
-        <img class="gifItem" src="https://media.giphy.com/media/l0HlBO7eyXzSZkJri/giphy.gif" alt="oylash">
-        <img class="gifItem" src="https://media.giphy.com/media/3oKIPnAiaMCws8nkwE/giphy.gif" alt="xayr">
+        <img class="gifItem" src="https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif" alt="gif">
+        <img class="gifItem" src="https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif" alt="gif">
+        <img class="gifItem" src="https://media.giphy.com/media/3ohzdIuqJoo8QdKlnW/giphy.gif" alt="gif">
+        <img class="gifItem" src="https://media.giphy.com/media/l4FGGafcOHmrlQxG0/giphy.gif" alt="gif">
+        <img class="gifItem" src="https://media.giphy.com/media/l0HlvtIPzPdt2usKs/giphy.gif" alt="gif">
+        <img class="gifItem" src="https://media.giphy.com/media/l4FGni1RBAR2OWsGk/giphy.gif" alt="gif">
+        <img class="gifItem" src="https://media.giphy.com/media/3oEjHAUOqG3lSS0f1C/giphy.gif" alt="gif">
+        <img class="gifItem" src="https://media.giphy.com/media/xT9IgG50Lg7russbDa/giphy.gif" alt="gif">
+        <img class="gifItem" src="https://media.giphy.com/media/l0HlBO7eyXzSZkJri/giphy.gif" alt="gif">
+        <img class="gifItem" src="https://media.giphy.com/media/3oKIPnAiaMCws8nkwE/giphy.gif" alt="gif">
       </div>
     </div>
-
     <div class="roomInputArea">
       <div class="roomMediaBtns">
         <button type="button" id="roomEmojiBtn">😊</button>
@@ -196,7 +237,118 @@
     </div>
   </div>
 
-  <p id="message"></p>
+  <!-- SUHBAT SAHIFASI (private/group/channel) -->
+  <div id="convPage" class="hidden fullPage">
+    <div class="fullPageHeader">
+      <button class="headerBackBtn" id="convBackBtn">← Yopish</button>
+      <div class="roomHeaderInfo">
+        <span class="roomHeaderName" id="convPageName"></span>
+        <span class="roomHeaderMeta" id="convPageMeta"></span>
+      </div>
+      <div class="headerRight">
+        <button class="deleteRoomPageBtn hidden" id="convDeleteBtn">🗑️</button>
+      </div>
+    </div>
+    <div class="roomMessages" id="convPageMessages"></div>
+    <div id="convMediaPanel" class="hidden">
+      <div id="convEmojiPanel" class="hidden mediaSubPanel">
+        <span class="emojiItem">😊</span><span class="emojiItem">😂</span><span class="emojiItem">❤️</span>
+        <span class="emojiItem">👍</span><span class="emojiItem">👎</span><span class="emojiItem">🔥</span>
+        <span class="emojiItem">😢</span><span class="emojiItem">😮</span><span class="emojiItem">🎉</span>
+        <span class="emojiItem">😎</span><span class="emojiItem">🙏</span><span class="emojiItem">💪</span>
+        <span class="emojiItem">😍</span><span class="emojiItem">🤔</span><span class="emojiItem">😴</span>
+        <span class="emojiItem">🥳</span><span class="emojiItem">😡</span><span class="emojiItem">🤣</span>
+        <span class="emojiItem">👏</span><span class="emojiItem">✅</span><span class="emojiItem">💯</span>
+        <span class="emojiItem">🎯</span><span class="emojiItem">🚀</span><span class="emojiItem">💎</span>
+        <span class="emojiItem">⭐</span><span class="emojiItem">🌟</span><span class="emojiItem">😏</span>
+        <span class="emojiItem">🤝</span><span class="emojiItem">👋</span><span class="emojiItem">🔥</span>
+      </div>
+      <div id="convStickerPanel" class="hidden mediaSubPanel">
+        <span class="stickerItem" data-sticker="🎉">🎉</span>
+        <span class="stickerItem" data-sticker="🏆">🏆</span>
+        <span class="stickerItem" data-sticker="💖">💖</span>
+        <span class="stickerItem" data-sticker="🌈">🌈</span>
+        <span class="stickerItem" data-sticker="🎸">🎸</span>
+        <span class="stickerItem" data-sticker="🦁">🦁</span>
+        <span class="stickerItem" data-sticker="🐉">🐉</span>
+        <span class="stickerItem" data-sticker="👑">👑</span>
+        <span class="stickerItem" data-sticker="🎭">🎭</span>
+        <span class="stickerItem" data-sticker="🌙">🌙</span>
+      </div>
+      <div id="convGifPanel" class="hidden mediaSubPanel">
+        <img class="gifItem" src="https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif" alt="gif">
+        <img class="gifItem" src="https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif" alt="gif">
+        <img class="gifItem" src="https://media.giphy.com/media/3ohzdIuqJoo8QdKlnW/giphy.gif" alt="gif">
+        <img class="gifItem" src="https://media.giphy.com/media/l4FGGafcOHmrlQxG0/giphy.gif" alt="gif">
+        <img class="gifItem" src="https://media.giphy.com/media/l0HlvtIPzPdt2usKs/giphy.gif" alt="gif">
+        <img class="gifItem" src="https://media.giphy.com/media/3oEjHAUOqG3lSS0f1C/giphy.gif" alt="gif">
+        <img class="gifItem" src="https://media.giphy.com/media/xT9IgG50Lg7russbDa/giphy.gif" alt="gif">
+        <img class="gifItem" src="https://media.giphy.com/media/l0HlBO7eyXzSZkJri/giphy.gif" alt="gif">
+        <img class="gifItem" src="https://media.giphy.com/media/3oKIPnAiaMCws8nkwE/giphy.gif" alt="gif">
+        <img class="gifItem" src="https://media.giphy.com/media/l4FGni1RBAR2OWsGk/giphy.gif" alt="gif">
+      </div>
+    </div>
+    <div class="roomInputArea" id="convInputArea">
+      <div class="roomMediaBtns">
+        <button type="button" id="convEmojiBtn">😊</button>
+        <button type="button" id="convStickerBtn">🖼️</button>
+        <button type="button" id="convGifBtn">GIF</button>
+      </div>
+      <div class="roomInputRow">
+        <input type="text" id="convMessageInput" placeholder="Xabar yozing...">
+        <button type="button" id="convVoiceBtn">🎤</button>
+        <button type="button" id="convSendBtn">➤</button>
+      </div>
+    </div>
+    <div id="channelSubscribeArea" class="hidden channelSubArea">
+      <button id="channelSubBtn" class="channelSubBtn">Obuna bo'lish</button>
+    </div>
+  </div>
+
+  <!-- YANGI CHAT QIDIRISH MODAL -->
+  <div id="searchModal" class="hidden modalOverlay">
+    <div class="modalCard">
+      <div class="modalHeader">
+        <h3>Foydalanuvchi qidirish</h3>
+        <button class="modalCloseBtn" id="closeSearchModal">✕</button>
+      </div>
+      <input type="text" class="modalInput" id="searchInput" placeholder="Telefon yoki @username">
+      <button class="authBtn" id="searchBtn">Qidirish</button>
+      <div id="searchResults" class="searchResults"></div>
+    </div>
+  </div>
+
+  <!-- YANGI GURUH YARATISH MODAL -->
+  <div id="newGroupModal" class="hidden modalOverlay">
+    <div class="modalCard">
+      <div class="modalHeader">
+        <h3>Yangi guruh yaratish</h3>
+        <button class="modalCloseBtn" id="closeGroupModal">✕</button>
+      </div>
+      <input type="text" class="modalInput" id="groupNameInput" placeholder="Guruh nomi">
+      <div class="modalRadioGroup">
+        <label class="modalRadio"><input type="radio" name="groupType" value="private" checked> 🔒 Shaxsiy</label>
+        <label class="modalRadio"><input type="radio" name="groupType" value="public"> 🌐 Ommaviy</label>
+      </div>
+      <button class="authBtn" id="createGroupBtn">Yaratish</button>
+    </div>
+  </div>
+
+  <!-- YANGI KANAL YARATISH MODAL -->
+  <div id="newChannelModal" class="hidden modalOverlay">
+    <div class="modalCard">
+      <div class="modalHeader">
+        <h3>Yangi kanal yaratish</h3>
+        <button class="modalCloseBtn" id="closeChannelModal">✕</button>
+      </div>
+      <input type="text" class="modalInput" id="channelNameInput" placeholder="Kanal nomi">
+      <div class="modalRadioGroup">
+        <label class="modalRadio"><input type="radio" name="channelType" value="private" checked> 🔒 Shaxsiy</label>
+        <label class="modalRadio"><input type="radio" name="channelType" value="public"> 🌐 Ommaviy</label>
+      </div>
+      <button class="authBtn" id="createChannelBtn">Yaratish</button>
+    </div>
+  </div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="auth.js"></script>

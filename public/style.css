@@ -9,7 +9,7 @@ body {
   color: #e8e8e8;
   font-family: 'Segoe UI', Arial, sans-serif;
   line-height: 1.6;
-  padding: 40px 20px;
+  padding-bottom: 70px;
 }
 
 body.no-scroll {
@@ -19,123 +19,315 @@ body.no-scroll {
   height: 100%;
 }
 
-h1 {
-  color: #ffffff;
-  font-size: 2rem;
-  margin-bottom: 12px;
+.hidden {
+  display: none !important;
 }
 
-p {
-  color: #b0b3b8;
-  font-size: 1rem;
-}
-
-form {
-  margin-top: 24px;
+/* ===== AUTH ===== */
+#authSection {
+  min-height: 100vh;
   display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
 }
 
-input[type="tel"] {
+.authCard {
   background-color: #1a1d24;
   border: 1px solid #2a2e38;
-  border-radius: 8px;
-  padding: 12px 16px;
-  color: #e8e8e8;
-  font-size: 1rem;
-  flex: 1;
-  min-width: 200px;
-  outline: none;
+  border-radius: 20px;
+  padding: 32px 24px;
+  width: 100%;
+  max-width: 380px;
 }
 
-input[type="tel"]:focus {
+.authTitle {
+  color: #ffffff;
+  font-size: 1.6rem;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.authSubtitle {
+  color: #b0b3b8;
+  font-size: 0.95rem;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.phoneInputGroup {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.countrySelector {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background-color: #0f1115;
+  border: 1px solid #2a2e38;
+  border-radius: 10px;
+  padding: 12px 10px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #e8e8e8;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.countrySelector:hover {
   border-color: #5865F2;
 }
 
-input[type="tel"]::placeholder {
+.countryCaret {
+  font-size: 0.7rem;
   color: #6b7280;
 }
 
-button {
+.countryDropdown {
+  position: absolute;
+  background-color: #1a1d24;
+  border: 1px solid #2a2e38;
+  border-radius: 12px;
+  z-index: 200;
+  width: 260px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  margin-top: 4px;
+}
+
+.countryOption {
+  padding: 12px 16px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #e8e8e8;
+  border-bottom: 1px solid #2a2e38;
+}
+
+.countryOption:last-child {
+  border-bottom: none;
+}
+
+.countryOption:hover {
+  background-color: #2a2e38;
+}
+
+#phoneInput {
+  background-color: #0f1115;
+  border: 1px solid #2a2e38;
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: #e8e8e8;
+  font-size: 1rem;
+  flex: 1;
+  outline: none;
+}
+
+#phoneInput:focus {
+  border-color: #5865F2;
+}
+
+#phoneInput::placeholder {
+  color: #6b7280;
+}
+
+.authBtn {
+  width: 100%;
   background-color: #5865F2;
   color: #ffffff;
   border: none;
-  border-radius: 8px;
-  padding: 12px 24px;
+  border-radius: 10px;
+  padding: 14px;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
   transition: background-color 0.2s;
+  margin-top: 8px;
 }
 
-button:hover {
+.authBtn:hover {
   background-color: #4752c4;
 }
 
-button:active {
-  background-color: #3c45a5;
-}
-
-#message {
-  margin-top: 16px;
-  font-weight: 500;
-}
-
-.hidden {
-  display: none;
-}
-
-.switchText {
-  margin-top: 16px;
-  font-size: 0.9rem;
-  color: #b0b3b8;
-}
-
-.switchText a {
+.authBackBtn {
+  width: 100%;
+  background-color: transparent;
   color: #5865F2;
-  text-decoration: none;
+  border: none;
+  padding: 10px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+.authError {
+  color: #f87171;
+  font-size: 0.85rem;
+  text-align: center;
+  margin-top: 8px;
+}
+
+.testCode {
+  color: #4ade80;
+  font-size: 0.9rem;
+  text-align: center;
+  margin-bottom: 16px;
   font-weight: 600;
 }
 
-.switchText a:hover {
-  text-decoration: underline;
+.codeInputGroup {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 20px;
 }
 
+.codeDigit {
+  width: 56px;
+  height: 60px;
+  background-color: #0f1115;
+  border: 2px solid #2a2e38;
+  border-radius: 12px;
+  color: #ffffff;
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-align: center;
+  outline: none;
+}
+
+.codeDigit:focus {
+  border-color: #5865F2;
+}
+
+.authInput {
+  width: 100%;
+  background-color: #0f1115;
+  border: 1px solid #2a2e38;
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: #e8e8e8;
+  font-size: 1rem;
+  outline: none;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.authInput:focus {
+  border-color: #5865F2;
+}
+
+.authInput::placeholder {
+  color: #6b7280;
+}
+
+/* ===== PASTKI NAV ===== */
+.bottomNav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background-color: #1a1d24;
+  border-top: 1px solid #2a2e38;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  height: 60px;
+  z-index: 50;
+}
+
+.navBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 8px 20px;
+  border-radius: 10px;
+  transition: color 0.2s;
+}
+
+.navBtn.active {
+  color: #5865F2;
+}
+
+.navBtn:hover {
+  background-color: transparent;
+  color: #5865F2;
+}
+
+.navIcon {
+  font-size: 1.4rem;
+}
+
+.navLabel {
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+/* ===== ASOSIY SAHIFA ===== */
+#mainSection {
+  padding: 20px 16px;
+}
+
+.tabContent {
+  display: block;
+}
+
+.tabContent.hidden {
+  display: none !important;
+}
+
+/* ===== PROFIL ===== */
 .profileCard {
   background-color: #1a1d24;
   border: 1px solid #2a2e38;
   border-radius: 16px;
-  padding: 32px 24px;
-  max-width: 360px;
-  text-align: center;
-  margin-top: 24px;
+  padding: 20px 16px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.profileAvatarWrap {
+  position: relative;
 }
 
 .profileAvatar {
-  width: 80px;
-  height: 80px;
+  width: 72px;
+  height: 72px;
   background-color: #2a2e38;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2.5rem;
-  margin: 0 auto 16px;
+  font-size: 2.2rem;
+}
+
+.profileInfo {
+  text-align: center;
+}
+
+.profileNickname {
+  color: #ffffff;
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 2px;
 }
 
 .profilePhone {
-  color: #e8e8e8;
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin-bottom: 20px;
+  color: #6b7280;
+  font-size: 0.85rem;
 }
 
 .profileStats {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   justify-content: center;
-  margin-bottom: 24px;
   flex-wrap: wrap;
 }
 
@@ -143,99 +335,128 @@ button:active {
   background-color: #0f1115;
   border: 1px solid #2a2e38;
   border-radius: 10px;
-  padding: 10px 16px;
+  padding: 8px 14px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
 }
 
-.diamondBadge {
-  color: #4ade80;
+.diamondBadge { color: #4ade80; }
+.rankBadge { color: #5865F2; }
+.statIcon { font-size: 1rem; }
+
+.profileBtns {
+  display: flex;
+  gap: 8px;
+  width: 100%;
 }
 
-.rankBadge {
-  color: #5865F2;
+.profileBtns button {
+  flex: 1;
+  background-color: #5865F2;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
 }
 
-.statIcon {
-  font-size: 1.1rem;
+.profileBtns button:hover {
+  background-color: #4752c4;
 }
 
+.logoutBtn {
+  background-color: #2a2e38 !important;
+  color: #f87171 !important;
+}
+
+.logoutBtn:hover {
+  background-color: #3a3e48 !important;
+}
+
+/* ===== KATEGORIYALAR ===== */
 .sectionTitle {
   color: #ffffff;
-  font-size: 1.3rem;
-  margin-top: 32px;
-  margin-bottom: 16px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 12px;
 }
 
 .categoryGrid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  max-width: 360px;
+  gap: 10px;
 }
 
 .categoryCard {
   background-color: #1a1d24;
   border: 1px solid #2a2e38;
   border-radius: 12px;
-  padding: 20px 12px;
+  padding: 16px 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   cursor: pointer;
   transition: transform 0.15s, border-color 0.15s;
 }
 
-.categoryCard:hover {
-  border-color: #5865F2;
-}
-
-.categoryCard:active {
-  transform: scale(0.96);
-}
-
-.categoryIcon {
-  font-size: 1.8rem;
-}
-
+.categoryCard:hover { border-color: #5865F2; }
+.categoryCard:active { transform: scale(0.96); }
+.categoryIcon { font-size: 1.6rem; }
 .categoryName {
   color: #e8e8e8;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 600;
   text-align: center;
 }
 
-.backBtn {
-  background-color: transparent;
-  color: #5865F2;
-  border: none;
-  padding: 8px 0;
-  font-size: 0.95rem;
-  font-weight: 600;
-  cursor: pointer;
+/* ===== TAB HEADER ===== */
+.tabHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 16px;
 }
 
-.backBtn:hover {
-  text-decoration: underline;
-  background-color: transparent;
+.tabTitle {
+  color: #ffffff;
+  font-size: 1.2rem;
+  font-weight: 700;
 }
 
-.lessonList {
+.tabAddBtn {
+  background-color: #5865F2;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  font-size: 1.4rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.tabAddBtn:hover { background-color: #4752c4; }
+
+/* ===== SUHBATLAR RO'YXATI ===== */
+.convList {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  max-width: 360px;
+  gap: 8px;
 }
 
-.lessonItem {
+.convItem {
   background-color: #1a1d24;
   border: 1px solid #2a2e38;
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 14px 16px;
   display: flex;
   align-items: center;
@@ -244,258 +465,173 @@ button:active {
   transition: border-color 0.15s;
 }
 
-.lessonItem:hover {
-  border-color: #5865F2;
-}
+.convItem:hover { border-color: #5865F2; }
 
-.lessonIcon {
-  font-size: 1.4rem;
-}
-
-.lessonName {
-  color: #e8e8e8;
-  font-size: 0.95rem;
-  font-weight: 500;
-}
-
-.createRoomForm {
-  margin-top: 0;
-  margin-bottom: 20px;
-}
-
-.roomNameInput {
-  background-color: #1a1d24;
-  border: 1px solid #2a2e38;
-  border-radius: 8px;
-  padding: 12px 16px;
-  color: #e8e8e8;
-  font-size: 1rem;
-  flex: 1;
-  min-width: 150px;
-  outline: none;
-}
-
-.roomNameInput:focus {
-  border-color: #5865F2;
-}
-
-.roomNameInput::placeholder {
-  color: #6b7280;
-}
-
-.roomList {
+.convAvatar {
+  width: 44px;
+  height: 44px;
+  background-color: #2a2e38;
+  border-radius: 50%;
   display: flex;
-  flex-direction: column;
-  gap: 10px;
-  max-width: 360px;
-}
-
-.roomItem {
-  background-color: #1a1d24;
-  border: 1px solid #2a2e38;
-  border-radius: 10px;
-  padding: 14px 16px;
-  display: flex;
-  justify-content: space-between;
   align-items: center;
-  cursor: pointer;
-  transition: border-color 0.15s;
-  position: relative;
+  justify-content: center;
+  font-size: 1.4rem;
+  flex-shrink: 0;
 }
 
-.roomItem:hover {
-  border-color: #5865F2;
+.convInfo {
+  flex: 1;
+  min-width: 0;
 }
 
-.roomName {
+.convName {
   color: #e8e8e8;
   font-size: 0.95rem;
   font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.roomCreator {
+.convLastMsg {
+  color: #6b7280;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+.convTime {
+  color: #6b7280;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+
+.emptyConvText {
+  color: #6b7280;
+  font-size: 0.9rem;
+  font-style: italic;
+  text-align: center;
+  margin-top: 40px;
+}
+
+/* ===== MODAL ===== */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.6);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modalCard {
+  background-color: #1a1d24;
+  border: 1px solid #2a2e38;
+  border-radius: 16px;
+  padding: 24px;
+  width: 100%;
+  max-width: 360px;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.modalHeader h3 {
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.modalCloseBtn {
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.modalCloseBtn:hover {
+  background: transparent;
+  color: #e8e8e8;
+}
+
+.modalInput {
+  width: 100%;
+  background-color: #0f1115;
+  border: 1px solid #2a2e38;
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: #e8e8e8;
+  font-size: 0.95rem;
+  outline: none;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.modalInput:focus { border-color: #5865F2; }
+.modalInput::placeholder { color: #6b7280; }
+
+.modalRadioGroup {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.modalRadio {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #e8e8e8;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.searchResults {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.searchResultItem {
+  background-color: #0f1115;
+  border: 1px solid #2a2e38;
+  border-radius: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.searchResultItem:hover { border-color: #5865F2; }
+
+.searchResultName {
+  color: #e8e8e8;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.searchResultPhone {
   color: #6b7280;
   font-size: 0.8rem;
 }
 
-.emptyRoomsText {
-  color: #6b7280;
-  font-size: 0.9rem;
-  font-style: italic;
-}
-
-.deleteRoomBtn {
-  font-size: 1.1rem;
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 6px;
-  transition: background-color 0.15s;
-}
-
-.deleteRoomBtn:hover {
-  background-color: #2a2e38;
-}
-
-.messageList {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  max-width: 360px;
-  max-height: 400px;
-  overflow-y: auto;
-  margin-bottom: 16px;
-}
-
-.messageBubble {
-  background-color: #1a1d24;
-  border: 1px solid #2a2e38;
-  border-radius: 10px;
-  padding: 10px 14px;
-  align-self: flex-start;
-  max-width: 80%;
-}
-
-.messageBubble.own {
-  background-color: #5865F2;
-  align-self: flex-end;
-}
-
-.messageSender {
-  color: #6b7280;
-  font-size: 0.75rem;
-  margin-bottom: 4px;
-}
-
-.messageBubble.own .messageSender {
-  color: #d1d5db;
-}
-
-.messageText {
-  color: #e8e8e8;
-  font-size: 0.95rem;
-}
-
-.messageBubble.own .messageText {
-  color: #ffffff;
-}
-
-.emptyMessagesText {
-  color: #6b7280;
-  font-size: 0.9rem;
-  font-style: italic;
-}
-
-.messageToolbar {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.messageToolbar button {
-  background-color: #1a1d24;
-  border: 1px solid #2a2e38;
-  border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 1.1rem;
-  cursor: pointer;
-  transition: border-color 0.15s;
-}
-
-.messageToolbar button:hover {
-  border-color: #5865F2;
-  background-color: #1a1d24;
-}
-
-.messageInputRow {
-  display: flex;
-  gap: 8px;
-}
-
-.messageInputRow input {
-  background-color: #1a1d24;
-  border: 1px solid #2a2e38;
-  border-radius: 8px;
-  padding: 12px 16px;
-  color: #e8e8e8;
-  font-size: 1rem;
-  flex: 1;
-  outline: none;
-}
-
-.messageInputRow input:focus {
-  border-color: #5865F2;
-}
-
-.messageInputRow input::placeholder {
-  color: #6b7280;
-}
-
-#mediaPanel {
-  background-color: #1a1d24;
-  border: 1px solid #2a2e38;
-  border-radius: 12px;
-  padding: 12px;
-  margin-bottom: 8px;
-  max-width: 360px;
-}
-
-.mediaSubPanel {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.emojiItem {
-  font-size: 1.6rem;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 6px;
-  transition: background-color 0.15s;
-}
-
-.emojiItem:hover {
-  background-color: #2a2e38;
-}
-
-.stickerItem {
-  font-size: 2.5rem;
-  cursor: pointer;
-  padding: 6px;
-  border-radius: 8px;
-  transition: background-color 0.15s;
-}
-
-.stickerItem:hover {
-  background-color: #2a2e38;
-}
-
-.gifItem {
-  width: 120px;
-  height: 80px;
-  object-fit: cover;
-  border-radius: 8px;
-  cursor: pointer;
-  border: 2px solid transparent;
-  transition: border-color 0.15s;
-}
-
-.gifItem:hover {
-  border-color: #5865F2;
-}
-
-.messageSticker {
-  font-size: 4rem;
-  display: block;
-  line-height: 1.2;
-  margin: 4px 0;
-}
-
-.messageGif {
-  max-width: 200px;
-  border-radius: 8px;
-  display: block;
-}
-
+/* ===== TO'LIQ EKRANLI SAHIFALAR ===== */
 .fullPage {
   position: fixed;
   top: 0;
@@ -509,9 +645,7 @@ button:active {
   overflow: hidden;
 }
 
-.fullPage.hidden {
-  display: none;
-}
+.fullPage.hidden { display: none !important; }
 
 .fullPageHeader {
   display: flex;
@@ -544,7 +678,6 @@ button:active {
   color: #ffffff;
   font-size: 1rem;
   font-weight: 700;
-  margin: 0;
   text-align: center;
   flex: 1;
   padding: 0 8px;
@@ -557,16 +690,8 @@ button:active {
   white-space: nowrap;
 }
 
-.headerDiamonds,
-.headerRoomCount {
-  color: #4ade80;
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
-.headerRoomCount {
-  color: #b0b3b8;
-}
+.headerDiamonds { color: #4ade80; font-size: 0.85rem; font-weight: 600; }
+.headerRoomCount { color: #b0b3b8; font-size: 0.85rem; font-weight: 600; }
 
 .fullPageContent {
   flex: 1;
@@ -584,23 +709,9 @@ button:active {
   padding: 0 8px;
 }
 
-.roomHeaderName {
-  color: #ffffff;
-  font-size: 0.95rem;
-  font-weight: 700;
-}
-
-.roomHeaderMeta {
-  color: #b0b3b8;
-  font-size: 0.75rem;
-  margin-top: 2px;
-}
-
-.myRankBadge {
-  color: #5865F2;
-  font-size: 0.8rem;
-  font-weight: 600;
-}
+.roomHeaderName { color: #ffffff; font-size: 0.95rem; font-weight: 700; }
+.roomHeaderMeta { color: #b0b3b8; font-size: 0.75rem; margin-top: 2px; }
+.myRankBadge { color: #5865F2; font-size: 0.8rem; font-weight: 600; }
 
 .deleteRoomPageBtn {
   background-color: transparent;
@@ -610,10 +721,7 @@ button:active {
   padding: 4px;
 }
 
-.deleteRoomPageBtn:hover {
-  background-color: #2a2e38;
-  border-radius: 6px;
-}
+.deleteRoomPageBtn:hover { background-color: #2a2e38; border-radius: 6px; }
 
 .roomMessages {
   flex: 1;
@@ -625,6 +733,30 @@ button:active {
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 }
+
+.messageBubble {
+  background-color: #1a1d24;
+  border: 1px solid #2a2e38;
+  border-radius: 10px;
+  padding: 10px 14px;
+  align-self: flex-start;
+  max-width: 80%;
+}
+
+.messageBubble.own {
+  background-color: #5865F2;
+  align-self: flex-end;
+}
+
+.messageSender { color: #6b7280; font-size: 0.75rem; margin-bottom: 4px; }
+.messageBubble.own .messageSender { color: #d1d5db; }
+.messageText { color: #e8e8e8; font-size: 0.95rem; }
+.messageBubble.own .messageText { color: #ffffff; }
+
+.messageSticker { font-size: 4rem; display: block; line-height: 1.2; margin: 4px 0; }
+.messageGif { max-width: 200px; border-radius: 8px; display: block; }
+
+.emptyMessagesText { color: #6b7280; font-size: 0.9rem; font-style: italic; text-align: center; margin-top: 40px; }
 
 .roomInputArea {
   background-color: #1a1d24;
@@ -649,10 +781,7 @@ button:active {
   color: #e8e8e8;
 }
 
-.roomMediaBtns button:hover {
-  border-color: #5865F2;
-  background-color: #0f1115;
-}
+.roomMediaBtns button:hover { border-color: #5865F2; background-color: #0f1115; }
 
 .roomInputRow {
   display: flex;
@@ -671,15 +800,10 @@ button:active {
   outline: none;
 }
 
-.roomInputRow input:focus {
-  border-color: #5865F2;
-}
+.roomInputRow input:focus { border-color: #5865F2; }
+.roomInputRow input::placeholder { color: #6b7280; }
 
-.roomInputRow input::placeholder {
-  color: #6b7280;
-}
-
-#roomVoiceBtn, #roomSendBtn {
+#roomVoiceBtn, #roomSendBtn, #convVoiceBtn, #convSendBtn {
   background-color: #5865F2;
   border: none;
   border-radius: 50%;
@@ -694,11 +818,12 @@ button:active {
   flex-shrink: 0;
 }
 
-#roomVoiceBtn:hover, #roomSendBtn:hover {
+#roomVoiceBtn:hover, #roomSendBtn:hover,
+#convVoiceBtn:hover, #convSendBtn:hover {
   background-color: #4752c4;
 }
 
-#roomMediaPanel {
+#roomMediaPanel, #convMediaPanel {
   background-color: #1a1d24;
   border-top: 1px solid #2a2e38;
   padding: 10px 12px;
@@ -706,3 +831,104 @@ button:active {
   overflow-y: auto;
   overscroll-behavior: contain;
 }
+
+.mediaSubPanel { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.emojiItem {
+  font-size: 1.6rem;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  transition: background-color 0.15s;
+}
+
+.emojiItem:hover { background-color: #2a2e38; }
+
+.stickerItem {
+  font-size: 2.5rem;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  transition: background-color 0.15s;
+}
+
+.stickerItem:hover { background-color: #2a2e38; }
+
+.gifItem {
+  width: 120px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color 0.15s;
+}
+
+.gifItem:hover { border-color: #5865F2; }
+
+.channelSubArea {
+  padding: 16px;
+  background-color: #1a1d24;
+  border-top: 1px solid #2a2e38;
+  flex-shrink: 0;
+}
+
+.channelSubBtn {
+  width: 100%;
+  background-color: #5865F2;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 14px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.channelSubBtn:hover { background-color: #4752c4; }
+.channelSubBtn.subscribed { background-color: #2a2e38; color: #f87171; }
+
+/* ===== XONALAR RO'YXATI ===== */
+.createRoomForm { margin-bottom: 16px; display: flex; gap: 8px; }
+.roomNameInput {
+  background-color: #0f1115;
+  border: 1px solid #2a2e38;
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: #e8e8e8;
+  font-size: 0.95rem;
+  flex: 1;
+  outline: none;
+}
+.roomNameInput:focus { border-color: #5865F2; }
+.roomNameInput::placeholder { color: #6b7280; }
+
+.roomList { display: flex; flex-direction: column; gap: 8px; }
+
+.roomItem {
+  background-color: #1a1d24;
+  border: 1px solid #2a2e38;
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  position: relative;
+}
+
+.roomItem:hover { border-color: #5865F2; }
+.roomName { color: #e8e8e8; font-size: 0.95rem; font-weight: 600; }
+.roomCreator { color: #6b7280; font-size: 0.8rem; }
+.emptyRoomsText { color: #6b7280; font-size: 0.9rem; font-style: italic; }
+
+.deleteRoomBtn {
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background-color 0.15s;
+}
+
+.deleteRoomBtn:hover { background-color: #2a2e38; }
