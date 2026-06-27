@@ -1,7 +1,6 @@
 const socket = io();
 const STATE_KEY = 'appState';
 
-// AUTH elementlari
 const authSection = document.getElementById('authSection');
 const step1 = document.getElementById('step1');
 const step2 = document.getElementById('step2');
@@ -28,7 +27,6 @@ const codeDigits = [
   document.getElementById('code4')
 ];
 
-// ASOSIY SAHIFA elementlari
 const mainSection = document.getElementById('mainSection');
 const homeTab = document.getElementById('homeTab');
 const chatsTab = document.getElementById('chatsTab');
@@ -44,12 +42,11 @@ const chatsList = document.getElementById('chatsList');
 const groupsList = document.getElementById('groupsList');
 const channelsList = document.getElementById('channelsList');
 
-// NAV elementlari
+const navHome = document.getElementById('navHome');
 const navChats = document.getElementById('navChats');
 const navGroups = document.getElementById('navGroups');
 const navChannels = document.getElementById('navChannels');
 
-// KATEGORIYA sahifasi
 const categoryPage = document.getElementById('categoryPage');
 const categoryBackBtn = document.getElementById('categoryBackBtn');
 const categoryPageTitle = document.getElementById('categoryPageTitle');
@@ -59,7 +56,6 @@ const categoryCreateRoomForm = document.getElementById('categoryCreateRoomForm')
 const categoryRoomNameInput = document.getElementById('categoryRoomNameInput');
 const categoryRoomList = document.getElementById('categoryRoomList');
 
-// XONA sahifasi
 const roomPage = document.getElementById('roomPage');
 const roomBackBtn = document.getElementById('roomBackBtn');
 const roomPageName = document.getElementById('roomPageName');
@@ -79,7 +75,6 @@ const roomEmojiBtn = document.getElementById('roomEmojiBtn');
 const roomStickerBtn = document.getElementById('roomStickerBtn');
 const roomGifBtn = document.getElementById('roomGifBtn');
 
-// SUHBAT sahifasi
 const convPage = document.getElementById('convPage');
 const convBackBtn = document.getElementById('convBackBtn');
 const convPageName = document.getElementById('convPageName');
@@ -100,7 +95,6 @@ const convInputArea = document.getElementById('convInputArea');
 const channelSubscribeArea = document.getElementById('channelSubscribeArea');
 const channelSubBtn = document.getElementById('channelSubBtn');
 
-// MODAL elementlari
 const searchModal = document.getElementById('searchModal');
 const closeSearchModal = document.getElementById('closeSearchModal');
 const searchInput = document.getElementById('searchInput');
@@ -125,8 +119,8 @@ let currentCategory = null;
 let currentRoomId = null;
 let currentConvId = null;
 let currentConvType = null;
+let activeTab = 'home';
 
-// ===== YORDAMCHI FUNKSIYALAR =====
 function saveState(type, data) {
   localStorage.setItem(STATE_KEY, JSON.stringify({ type, data }));
 }
@@ -172,18 +166,14 @@ document.querySelectorAll('.countryOption').forEach(opt => {
   });
 });
 
-// ===== KOD KIRITISH (4 katak) =====
+// ===== KOD KIRITISH =====
 codeDigits.forEach((input, index) => {
   input.addEventListener('input', () => {
     input.value = input.value.replace(/\D/g, '');
-    if (input.value && index < 3) {
-      codeDigits[index + 1].focus();
-    }
+    if (input.value && index < 3) codeDigits[index + 1].focus();
   });
   input.addEventListener('keydown', (e) => {
-    if (e.key === 'Backspace' && !input.value && index > 0) {
-      codeDigits[index - 1].focus();
-    }
+    if (e.key === 'Backspace' && !input.value && index > 0) codeDigits[index - 1].focus();
   });
 });
 
@@ -334,46 +324,42 @@ dailyClaimBtn.addEventListener('click', async () => {
 });
 
 // ===== PASTKI NAV =====
-const tabs = {
-  chats: { btn: navChats, tab: chatsTab },
-  groups: { btn: navGroups, tab: groupsTab },
-  channels: { btn: navChannels, tab: channelsTab }
-};
-
 function switchTab(tabName) {
-  Object.keys(tabs).forEach(key => {
-    tabs[key].btn.classList.remove('active');
-    tabs[key].tab.classList.add('hidden');
-    homeTab.classList.add('hidden');
-  });
+  [homeTab, chatsTab, groupsTab, channelsTab].forEach(t => t.classList.add('hidden'));
+  [navHome, navChats, navGroups, navChannels].forEach(b => b.classList.remove('active'));
+  activeTab = tabName;
+
   if (tabName === 'home') {
     homeTab.classList.remove('hidden');
-    return;
+    navHome.classList.add('active');
+  } else if (tabName === 'chats') {
+    chatsTab.classList.remove('hidden');
+    navChats.classList.add('active');
+    loadConversations('private');
+  } else if (tabName === 'groups') {
+    groupsTab.classList.remove('hidden');
+    navGroups.classList.add('active');
+    loadConversations('group');
+  } else if (tabName === 'channels') {
+    channelsTab.classList.remove('hidden');
+    navChannels.classList.add('active');
+    loadConversations('channel');
   }
-  tabs[tabName].btn.classList.add('active');
-  tabs[tabName].tab.classList.remove('hidden');
-  if (tabName === 'chats') loadConversations('private');
-  if (tabName === 'groups') loadConversations('group');
-  if (tabName === 'channels') loadConversations('channel');
 }
 
+navHome.addEventListener('click', () => switchTab('home'));
 navChats.addEventListener('click', () => switchTab('chats'));
 navGroups.addEventListener('click', () => switchTab('groups'));
 navChannels.addEventListener('click', () => switchTab('channels'));
 
-// default — home
-homeTab.classList.remove('hidden');
-
-// ===== SUHBATLAR RO'YXATINI YUKLASH =====
+// ===== SUHBATLAR RO'YXATI =====
 async function loadConversations(type) {
   const listEl = type === 'private' ? chatsList : type === 'group' ? groupsList : channelsList;
   listEl.innerHTML = '<p class="emptyConvText">Yuklanmoqda...</p>';
   try {
     const res = await fetch(`/api/conversations?phone=${currentUser.phone}&type=${type}`);
     const data = await res.json();
-    if (data.success) {
-      renderConversations(data.conversations, listEl, type);
-    }
+    if (data.success) renderConversations(data.conversations, listEl, type);
   } catch {
     listEl.innerHTML = '<p class="emptyConvText">Xatolik yuz berdi.</p>';
   }
@@ -391,10 +377,10 @@ function renderConversations(convs, listEl, type) {
   convs.forEach(conv => {
     const item = document.createElement('div');
     item.className = 'convItem';
-    let icon = type === 'private' ? '👤' : type === 'group' ? '👥' : '📢';
-    let name = conv.name || conv.members?.find(m => m !== currentUser.phone) || 'Chat';
-    let lastMsg = conv.lastMessage || '';
-    let time = conv.lastMessageAt ? new Date(conv.lastMessageAt).toLocaleTimeString('uz', { hour: '2-digit', minute: '2-digit' }) : '';
+    const icon = type === 'private' ? '👤' : type === 'group' ? '👥' : '📢';
+    const name = conv.name || conv.members?.find(m => m !== currentUser.phone) || 'Chat';
+    const lastMsg = conv.lastMessage || '';
+    const time = conv.lastMessageAt ? new Date(conv.lastMessageAt).toLocaleTimeString('uz', { hour: '2-digit', minute: '2-digit' }) : '';
     item.innerHTML = `
       <div class="convAvatar">${icon}</div>
       <div class="convInfo">
@@ -408,7 +394,7 @@ function renderConversations(convs, listEl, type) {
   });
 }
 
-// ===== SUHBAT SAHIFASINI OCHISH =====
+// ===== SUHBAT SAHIFASI =====
 async function openConvPage(conv) {
   currentConvId = conv._id;
   currentConvType = conv.type;
@@ -440,9 +426,7 @@ async function openConvPage(conv) {
   try {
     const res = await fetch(`/api/conversations/${conv._id}`);
     const data = await res.json();
-    if (data.success) {
-      renderConvMessages(data.conversation.messages || []);
-    }
+    if (data.success) renderConvMessages(data.conversation.messages || []);
   } catch {}
 
   socket.emit('joinConversation', conv._id);
@@ -478,6 +462,10 @@ convBackBtn.addEventListener('click', () => {
   convPage.classList.add('hidden');
   unlockScroll();
   closeAllConvPanels();
+  // Ro'yxatni yangilash
+  if (activeTab === 'chats') loadConversations('private');
+  else if (activeTab === 'groups') loadConversations('group');
+  else if (activeTab === 'channels') loadConversations('channel');
 });
 
 convSendBtn.addEventListener('click', sendConvMessage);
@@ -522,7 +510,11 @@ socket.on('newConvMessage', (data) => {
 
 // ===== MODAL: YANGI CHAT =====
 newChatBtn.addEventListener('click', () => searchModal.classList.remove('hidden'));
-closeSearchModal.addEventListener('click', () => { searchModal.classList.add('hidden'); searchResults.innerHTML = ''; searchInput.value = ''; });
+closeSearchModal.addEventListener('click', () => {
+  searchModal.classList.add('hidden');
+  searchResults.innerHTML = '';
+  searchInput.value = '';
+});
 
 searchBtn.addEventListener('click', async () => {
   const q = searchInput.value.trim();
@@ -548,6 +540,8 @@ searchBtn.addEventListener('click', async () => {
       `;
       item.addEventListener('click', async () => {
         searchModal.classList.add('hidden');
+        searchResults.innerHTML = '';
+        searchInput.value = '';
         try {
           const res = await fetch('/api/conversations/create', {
             method: 'POST',
@@ -556,7 +550,7 @@ searchBtn.addEventListener('click', async () => {
           });
           const data = await res.json();
           if (data.success) {
-            switchTab('chats');
+            await loadConversations('private');
             openConvPage(data.conversation);
           }
         } catch {}
@@ -584,7 +578,7 @@ createGroupBtn.addEventListener('click', async () => {
     if (data.success) {
       newGroupModal.classList.add('hidden');
       groupNameInput.value = '';
-      switchTab('groups');
+      await loadConversations('group');
       openConvPage(data.conversation);
     }
   } catch {}
@@ -608,7 +602,7 @@ createChannelBtn.addEventListener('click', async () => {
     if (data.success) {
       newChannelModal.classList.add('hidden');
       channelNameInput.value = '';
-      switchTab('channels');
+      await loadConversations('channel');
       openConvPage(data.conversation);
     }
   } catch {}

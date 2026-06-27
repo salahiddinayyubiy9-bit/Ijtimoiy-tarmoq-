@@ -8,12 +8,9 @@
 </head>
 <body>
 
-  <!-- AUTH SAHIFASI -->
   <div id="authSection">
     <div class="authCard">
       <h1 class="authTitle">Xush kelibsiz!</h1>
-
-      <!-- STEP 1: Telefon -->
       <div id="step1">
         <p class="authSubtitle">Telefon raqamingizni kiriting</p>
         <div class="phoneInputGroup">
@@ -35,8 +32,6 @@
         <button class="authBtn" id="sendCodeBtn">Kod yuborish</button>
         <p id="authMessage" class="authError hidden"></p>
       </div>
-
-      <!-- STEP 2: Kod -->
       <div id="step2" class="hidden">
         <p class="authSubtitle">4 xonali kodni kiriting</p>
         <p id="testCodeDisplay" class="testCode"></p>
@@ -50,8 +45,6 @@
         <button class="authBackBtn" id="backToStep1">← Orqaga</button>
         <p id="codeMessage" class="authError hidden"></p>
       </div>
-
-      <!-- STEP 3: Profil sozlash (yangi foydalanuvchi) -->
       <div id="step3" class="hidden">
         <p class="authSubtitle">Profilingizni sozlang</p>
         <input type="text" class="authInput" id="nicknameInput" placeholder="Ismingiz (majburiy)" maxlength="30">
@@ -62,26 +55,27 @@
     </div>
   </div>
 
-  <!-- ASOSIY SAHIFA -->
   <div id="mainSection" class="hidden">
 
-    <!-- PASTKI NAVIGATSIYA -->
     <nav class="bottomNav" id="bottomNav">
-      <button class="navBtn" id="navGroups" data-tab="groups">
+      <button class="navBtn" id="navGroups">
         <span class="navIcon">👥</span>
         <span class="navLabel">Guruhlar</span>
       </button>
-      <button class="navBtn active" id="navChats" data-tab="chats">
+      <button class="navBtn" id="navChats">
         <span class="navIcon">💬</span>
         <span class="navLabel">Chatlar</span>
       </button>
-      <button class="navBtn" id="navChannels" data-tab="channels">
+      <button class="navBtn active" id="navHome">
+        <span class="navIcon">🏠</span>
+        <span class="navLabel">Asosiy</span>
+      </button>
+      <button class="navBtn" id="navChannels">
         <span class="navIcon">📢</span>
         <span class="navLabel">Kanallar</span>
       </button>
     </nav>
 
-    <!-- BOSH EKRAN (profil + kategoriyalar) -->
     <div id="homeTab" class="tabContent">
       <div class="profileCard">
         <div class="profileAvatarWrap">
@@ -106,7 +100,6 @@
           <button id="logoutBtn" class="logoutBtn">Chiqish</button>
         </div>
       </div>
-
       <div id="homeSection">
         <h2 class="sectionTitle">Kategoriyalar</h2>
         <div class="categoryGrid">
@@ -122,7 +115,6 @@
       </div>
     </div>
 
-    <!-- CHATLAR TAB -->
     <div id="chatsTab" class="tabContent hidden">
       <div class="tabHeader">
         <h2 class="tabTitle">Chatlar</h2>
@@ -131,7 +123,6 @@
       <div class="convList" id="chatsList"></div>
     </div>
 
-    <!-- GURUHLAR TAB -->
     <div id="groupsTab" class="tabContent hidden">
       <div class="tabHeader">
         <h2 class="tabTitle">Guruhlar</h2>
@@ -140,7 +131,6 @@
       <div class="convList" id="groupsList"></div>
     </div>
 
-    <!-- KANALLAR TAB -->
     <div id="channelsTab" class="tabContent hidden">
       <div class="tabHeader">
         <h2 class="tabTitle">Kanallar</h2>
@@ -150,9 +140,6 @@
     </div>
   </div>
 
-  <!-- TO'LIQ EKRANLI SAHIFALAR -->
-
-  <!-- KATEGORIYA SAHIFASI -->
   <div id="categoryPage" class="hidden fullPage">
     <div class="fullPageHeader">
       <button class="headerBackBtn" id="categoryBackBtn">← Chiqish</button>
@@ -171,7 +158,6 @@
     </div>
   </div>
 
-  <!-- XONA SAHIFASI -->
   <div id="roomPage" class="hidden fullPage">
     <div class="fullPageHeader">
       <button class="headerBackBtn" id="roomBackBtn">← Yopish</button>
@@ -237,7 +223,6 @@
     </div>
   </div>
 
-  <!-- SUHBAT SAHIFASI (private/group/channel) -->
   <div id="convPage" class="hidden fullPage">
     <div class="fullPageHeader">
       <button class="headerBackBtn" id="convBackBtn">← Yopish</button>
@@ -305,7 +290,6 @@
     </div>
   </div>
 
-  <!-- YANGI CHAT QIDIRISH MODAL -->
   <div id="searchModal" class="hidden modalOverlay">
     <div class="modalCard">
       <div class="modalHeader">
@@ -318,7 +302,6 @@
     </div>
   </div>
 
-  <!-- YANGI GURUH YARATISH MODAL -->
   <div id="newGroupModal" class="hidden modalOverlay">
     <div class="modalCard">
       <div class="modalHeader">
@@ -334,7 +317,6 @@
     </div>
   </div>
 
-  <!-- YANGI KANAL YARATISH MODAL -->
   <div id="newChannelModal" class="hidden modalOverlay">
     <div class="modalCard">
       <div class="modalHeader">
