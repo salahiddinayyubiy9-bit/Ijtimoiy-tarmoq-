@@ -1,6 +1,8 @@
 const socket = io();
 const STATE_KEY = 'appState';
+const ADMIN_SECRET = 'admin_secret_2026';
 
+// AUTH
 const authSection = document.getElementById('authSection');
 const step1 = document.getElementById('step1');
 const step2 = document.getElementById('step2');
@@ -21,12 +23,11 @@ const countryDropdown = document.getElementById('countryDropdown');
 const countryFlag = document.getElementById('countryFlag');
 const countryCodeEl = document.getElementById('countryCode');
 const codeDigits = [
-  document.getElementById('code1'),
-  document.getElementById('code2'),
-  document.getElementById('code3'),
-  document.getElementById('code4')
+  document.getElementById('code1'), document.getElementById('code2'),
+  document.getElementById('code3'), document.getElementById('code4')
 ];
 
+// MAIN
 const mainSection = document.getElementById('mainSection');
 const homeTab = document.getElementById('homeTab');
 const chatsTab = document.getElementById('chatsTab');
@@ -41,12 +42,12 @@ const logoutBtn = document.getElementById('logoutBtn');
 const chatsList = document.getElementById('chatsList');
 const groupsList = document.getElementById('groupsList');
 const channelsList = document.getElementById('channelsList');
-
 const navHome = document.getElementById('navHome');
 const navChats = document.getElementById('navChats');
 const navGroups = document.getElementById('navGroups');
 const navChannels = document.getElementById('navChannels');
 
+// KATEGORIYA
 const categoryPage = document.getElementById('categoryPage');
 const categoryBackBtn = document.getElementById('categoryBackBtn');
 const categoryPageTitle = document.getElementById('categoryPageTitle');
@@ -56,6 +57,7 @@ const categoryCreateRoomForm = document.getElementById('categoryCreateRoomForm')
 const categoryRoomNameInput = document.getElementById('categoryRoomNameInput');
 const categoryRoomList = document.getElementById('categoryRoomList');
 
+// XONA
 const roomPage = document.getElementById('roomPage');
 const roomBackBtn = document.getElementById('roomBackBtn');
 const roomPageName = document.getElementById('roomPageName');
@@ -67,6 +69,7 @@ const roomPageMessages = document.getElementById('roomPageMessages');
 const roomMessageInput = document.getElementById('roomMessageInput');
 const roomSendBtn = document.getElementById('roomSendBtn');
 const roomVoiceBtn = document.getElementById('roomVoiceBtn');
+const roomImageInput = document.getElementById('roomImageInput');
 const roomMediaPanel = document.getElementById('roomMediaPanel');
 const roomEmojiPanel = document.getElementById('roomEmojiPanel');
 const roomStickerPanel = document.getElementById('roomStickerPanel');
@@ -75,6 +78,7 @@ const roomEmojiBtn = document.getElementById('roomEmojiBtn');
 const roomStickerBtn = document.getElementById('roomStickerBtn');
 const roomGifBtn = document.getElementById('roomGifBtn');
 
+// SUHBAT
 const convPage = document.getElementById('convPage');
 const convBackBtn = document.getElementById('convBackBtn');
 const convPageName = document.getElementById('convPageName');
@@ -84,6 +88,7 @@ const convPageMessages = document.getElementById('convPageMessages');
 const convMessageInput = document.getElementById('convMessageInput');
 const convSendBtn = document.getElementById('convSendBtn');
 const convVoiceBtn = document.getElementById('convVoiceBtn');
+const convImageInput = document.getElementById('convImageInput');
 const convMediaPanel = document.getElementById('convMediaPanel');
 const convEmojiPanel = document.getElementById('convEmojiPanel');
 const convStickerPanel = document.getElementById('convStickerPanel');
@@ -95,6 +100,7 @@ const convInputArea = document.getElementById('convInputArea');
 const channelSubscribeArea = document.getElementById('channelSubscribeArea');
 const channelSubBtn = document.getElementById('channelSubBtn');
 
+// MODALLAR
 const searchModal = document.getElementById('searchModal');
 const closeSearchModal = document.getElementById('closeSearchModal');
 const searchInput = document.getElementById('searchInput');
@@ -111,6 +117,9 @@ const createChannelBtn = document.getElementById('createChannelBtn');
 const newChatBtn = document.getElementById('newChatBtn');
 const newGroupBtn = document.getElementById('newGroupBtn');
 const newChannelBtn = document.getElementById('newChannelBtn');
+const adminModal = document.getElementById('adminModal');
+const closeAdminModal = document.getElementById('closeAdminModal');
+const adminContent = document.getElementById('adminContent');
 
 let currentPhone = '';
 let selectedCountryCode = '+998';
@@ -121,42 +130,42 @@ let currentConvId = null;
 let currentConvType = null;
 let activeTab = 'home';
 
-function saveState(type, data) {
-  localStorage.setItem(STATE_KEY, JSON.stringify({ type, data }));
-}
+function saveState(type, data) { localStorage.setItem(STATE_KEY, JSON.stringify({ type, data })); }
+function clearState() { localStorage.removeItem(STATE_KEY); }
+function lockScroll() { document.body.classList.add('no-scroll'); }
+function unlockScroll() { document.body.classList.remove('no-scroll'); }
+function showError(el, msg) { el.textContent = msg; el.classList.remove('hidden'); }
+function hideError(el) { el.textContent = ''; el.classList.add('hidden'); }
 
-function clearState() {
-  localStorage.removeItem(STATE_KEY);
-}
-
-function lockScroll() {
-  document.body.classList.add('no-scroll');
-}
-
-function unlockScroll() {
-  document.body.classList.remove('no-scroll');
-}
-
-function showError(el, msg) {
-  el.textContent = msg;
-  el.classList.remove('hidden');
-}
-
-function hideError(el) {
-  el.textContent = '';
-  el.classList.add('hidden');
+// ===== RASM KICHRAYTIRISH =====
+function compressImage(file, maxWidth = 800, quality = 0.7) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        if (width > maxWidth) {
+          height = Math.round(height * maxWidth / width);
+          width = maxWidth;
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
 }
 
 // ===== DAVLAT KODI =====
-countrySelector.addEventListener('click', (e) => {
-  e.stopPropagation();
-  countryDropdown.classList.toggle('hidden');
-});
-
-document.addEventListener('click', () => {
-  countryDropdown.classList.add('hidden');
-});
-
+countrySelector.addEventListener('click', (e) => { e.stopPropagation(); countryDropdown.classList.toggle('hidden'); });
+document.addEventListener('click', () => { countryDropdown.classList.add('hidden'); });
 document.querySelectorAll('.countryOption').forEach(opt => {
   opt.addEventListener('click', () => {
     selectedCountryCode = opt.dataset.code;
@@ -177,14 +186,8 @@ codeDigits.forEach((input, index) => {
   });
 });
 
-function getCode() {
-  return codeDigits.map(d => d.value).join('');
-}
-
-function clearCode() {
-  codeDigits.forEach(d => d.value = '');
-  codeDigits[0].focus();
-}
+function getCode() { return codeDigits.map(d => d.value).join(''); }
+function clearCode() { codeDigits.forEach(d => d.value = ''); codeDigits[0].focus(); }
 
 // ===== AUTH =====
 sendCodeBtn.addEventListener('click', async () => {
@@ -194,8 +197,7 @@ sendCodeBtn.addEventListener('click', async () => {
   hideError(authMessage);
   try {
     const res = await fetch('/api/send-code', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ phone: fullPhone })
     });
     const data = await res.json();
@@ -205,19 +207,11 @@ sendCodeBtn.addEventListener('click', async () => {
       step2.classList.remove('hidden');
       testCodeDisplay.textContent = `Test kodi: ${data.testCode}`;
       codeDigits[0].focus();
-    } else {
-      showError(authMessage, data.error);
-    }
-  } catch {
-    showError(authMessage, 'Xatolik yuz berdi.');
-  }
+    } else { showError(authMessage, data.error); }
+  } catch { showError(authMessage, 'Xatolik yuz berdi.'); }
 });
 
-backToStep1.addEventListener('click', () => {
-  step2.classList.add('hidden');
-  step1.classList.remove('hidden');
-  clearCode();
-});
+backToStep1.addEventListener('click', () => { step2.classList.add('hidden'); step1.classList.remove('hidden'); clearCode(); });
 
 verifyCodeBtn.addEventListener('click', async () => {
   const code = getCode();
@@ -225,26 +219,15 @@ verifyCodeBtn.addEventListener('click', async () => {
   hideError(codeMessage);
   try {
     const res = await fetch('/api/verify-code', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ phone: currentPhone, code: code })
     });
     const data = await res.json();
     if (data.success) {
-      if (data.isNewUser) {
-        step2.classList.add('hidden');
-        step3.classList.remove('hidden');
-      } else {
-        localStorage.setItem('user', JSON.stringify(data.user));
-        showMainSection(data.user);
-      }
-    } else {
-      showError(codeMessage, data.error);
-      clearCode();
-    }
-  } catch {
-    showError(codeMessage, 'Xatolik yuz berdi.');
-  }
+      if (data.isNewUser) { step2.classList.add('hidden'); step3.classList.remove('hidden'); }
+      else { localStorage.setItem('user', JSON.stringify(data.user)); showMainSection(data.user); }
+    } else { showError(codeMessage, data.error); clearCode(); }
+  } catch { showError(codeMessage, 'Xatolik yuz berdi.'); }
 });
 
 setupProfileBtn.addEventListener('click', async () => {
@@ -254,20 +237,13 @@ setupProfileBtn.addEventListener('click', async () => {
   hideError(profileMessage);
   try {
     const res = await fetch('/api/setup-profile', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ phone: currentPhone, nickname: nickname, username: username || null })
     });
     const data = await res.json();
-    if (data.success) {
-      localStorage.setItem('user', JSON.stringify(data.user));
-      showMainSection(data.user);
-    } else {
-      showError(profileMessage, data.error);
-    }
-  } catch {
-    showError(profileMessage, 'Xatolik yuz berdi.');
-  }
+    if (data.success) { localStorage.setItem('user', JSON.stringify(data.user)); showMainSection(data.user); }
+    else { showError(profileMessage, data.error); }
+  } catch { showError(profileMessage, 'Xatolik yuz berdi.'); }
 });
 
 // ===== ASOSIY SAHIFA =====
@@ -282,14 +258,11 @@ function showMainSection(user) {
 }
 
 const savedUser = localStorage.getItem('user');
-if (savedUser) {
-  showMainSection(JSON.parse(savedUser));
-}
+if (savedUser) showMainSection(JSON.parse(savedUser));
 
 logoutBtn.addEventListener('click', () => {
   localStorage.removeItem('user');
-  clearState();
-  unlockScroll();
+  clearState(); unlockScroll();
   mainSection.classList.add('hidden');
   categoryPage.classList.add('hidden');
   roomPage.classList.add('hidden');
@@ -298,15 +271,13 @@ logoutBtn.addEventListener('click', () => {
   step1.classList.remove('hidden');
   step2.classList.add('hidden');
   step3.classList.add('hidden');
-  phoneInput.value = '';
-  clearCode();
+  phoneInput.value = ''; clearCode();
 });
 
 dailyClaimBtn.addEventListener('click', async () => {
   try {
     const res = await fetch('/api/daily-claim', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ phone: currentUser.phone })
     });
     const data = await res.json();
@@ -315,11 +286,17 @@ dailyClaimBtn.addEventListener('click', async () => {
       localStorage.setItem('user', JSON.stringify(data.user));
       profileDiamonds.textContent = data.user.diamonds;
       alert('Tabriklaymiz! Sizga 15 olmos qo\'shildi!');
-    } else {
-      alert(data.error);
-    }
-  } catch {
-    alert('Xatolik yuz berdi.');
+    } else { alert(data.error); }
+  } catch { alert('Xatolik yuz berdi.'); }
+});
+
+// Admin panel — profilga 5 marta bossangiz ochiladi
+let profileClickCount = 0;
+document.getElementById('profileAvatar').addEventListener('click', () => {
+  profileClickCount++;
+  if (profileClickCount >= 5) {
+    profileClickCount = 0;
+    openAdminPanel();
   }
 });
 
@@ -328,23 +305,10 @@ function switchTab(tabName) {
   [homeTab, chatsTab, groupsTab, channelsTab].forEach(t => t.classList.add('hidden'));
   [navHome, navChats, navGroups, navChannels].forEach(b => b.classList.remove('active'));
   activeTab = tabName;
-
-  if (tabName === 'home') {
-    homeTab.classList.remove('hidden');
-    navHome.classList.add('active');
-  } else if (tabName === 'chats') {
-    chatsTab.classList.remove('hidden');
-    navChats.classList.add('active');
-    loadConversations('private');
-  } else if (tabName === 'groups') {
-    groupsTab.classList.remove('hidden');
-    navGroups.classList.add('active');
-    loadConversations('group');
-  } else if (tabName === 'channels') {
-    channelsTab.classList.remove('hidden');
-    navChannels.classList.add('active');
-    loadConversations('channel');
-  }
+  if (tabName === 'home') { homeTab.classList.remove('hidden'); navHome.classList.add('active'); }
+  else if (tabName === 'chats') { chatsTab.classList.remove('hidden'); navChats.classList.add('active'); loadConversations('private'); }
+  else if (tabName === 'groups') { groupsTab.classList.remove('hidden'); navGroups.classList.add('active'); loadConversations('group'); }
+  else if (tabName === 'channels') { channelsTab.classList.remove('hidden'); navChannels.classList.add('active'); loadConversations('channel'); }
 }
 
 navHome.addEventListener('click', () => switchTab('home'));
@@ -360,9 +324,7 @@ async function loadConversations(type) {
     const res = await fetch(`/api/conversations?phone=${currentUser.phone}&type=${type}`);
     const data = await res.json();
     if (data.success) renderConversations(data.conversations, listEl, type);
-  } catch {
-    listEl.innerHTML = '<p class="emptyConvText">Xatolik yuz berdi.</p>';
-  }
+  } catch { listEl.innerHTML = '<p class="emptyConvText">Xatolik yuz berdi.</p>'; }
 }
 
 function renderConversations(convs, listEl, type) {
@@ -383,10 +345,7 @@ function renderConversations(convs, listEl, type) {
     const time = conv.lastMessageAt ? new Date(conv.lastMessageAt).toLocaleTimeString('uz', { hour: '2-digit', minute: '2-digit' }) : '';
     item.innerHTML = `
       <div class="convAvatar">${icon}</div>
-      <div class="convInfo">
-        <div class="convName">${name}</div>
-        <div class="convLastMsg">${lastMsg}</div>
-      </div>
+      <div class="convInfo"><div class="convName">${name}</div><div class="convLastMsg">${lastMsg}</div></div>
       <div class="convTime">${time}</div>
     `;
     item.addEventListener('click', () => openConvPage(conv));
@@ -422,22 +381,17 @@ async function openConvPage(conv) {
 
   lockScroll();
   convPage.classList.remove('hidden');
-
   try {
     const res = await fetch(`/api/conversations/${conv._id}`);
     const data = await res.json();
     if (data.success) renderConvMessages(data.conversation.messages || []);
   } catch {}
-
   socket.emit('joinConversation', conv._id);
 }
 
 function renderConvMessages(messages) {
   convPageMessages.innerHTML = '';
-  if (messages.length === 0) {
-    convPageMessages.innerHTML = '<p class="emptyMessagesText">Hali xabarlar yo\'q.</p>';
-    return;
-  }
+  if (messages.length === 0) { convPageMessages.innerHTML = '<p class="emptyMessagesText">Hali xabarlar yo\'q.</p>'; return; }
   messages.forEach(msg => appendConvMessage(msg));
 }
 
@@ -450,6 +404,8 @@ function appendConvMessage(msg) {
     contentHtml = `<span class="messageSticker">${msg.text.slice(9, -1)}</span>`;
   } else if (msg.text.startsWith('[gif:') && msg.text.endsWith(']')) {
     contentHtml = `<img class="messageGif" src="${msg.text.slice(5, -1)}" alt="gif">`;
+  } else if (msg.text.startsWith('[image:') && msg.text.endsWith(']')) {
+    contentHtml = `<img class="messageImage" src="${msg.text.slice(7, -1)}" alt="rasm">`;
   } else {
     contentHtml = `<p class="messageText">${msg.text}</p>`;
   }
@@ -462,7 +418,6 @@ convBackBtn.addEventListener('click', () => {
   convPage.classList.add('hidden');
   unlockScroll();
   closeAllConvPanels();
-  // Ro'yxatni yangilash
   if (activeTab === 'chats') loadConversations('private');
   else if (activeTab === 'groups') loadConversations('group');
   else if (activeTab === 'channels') loadConversations('channel');
@@ -474,24 +429,26 @@ convMessageInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendC
 function sendConvMessage() {
   const text = convMessageInput.value.trim();
   if (!text || !currentConvId) return;
-  socket.emit('sendConvMessage', {
-    convId: currentConvId,
-    text: text,
-    phone: currentUser.phone,
-    senderNickname: currentUser.nickname || currentUser.phone
-  });
+  socket.emit('sendConvMessage', { convId: currentConvId, text: text, phone: currentUser.phone, senderNickname: currentUser.nickname || currentUser.phone });
   convMessageInput.value = '';
 }
+
+// Conv rasm yuborish
+convImageInput.addEventListener('change', async () => {
+  const file = convImageInput.files[0];
+  if (!file) return;
+  const imageData = await compressImage(file);
+  socket.emit('sendConvMessage', { convId: currentConvId, text: '', phone: currentUser.phone, senderNickname: currentUser.nickname || currentUser.phone, imageData: imageData });
+  convImageInput.value = '';
+});
 
 convVoiceBtn.addEventListener('click', () => alert('Ovozli xabar tez orada!'));
 
 channelSubBtn.addEventListener('click', async () => {
   const isSubscribed = channelSubBtn.classList.contains('subscribed');
-  const url = `/api/conversations/${currentConvId}/${isSubscribed ? 'unsubscribe' : 'subscribe'}`;
   try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    const res = await fetch(`/api/conversations/${currentConvId}/${isSubscribed ? 'unsubscribe' : 'subscribe'}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ phone: currentUser.phone })
     });
     const data = await res.json();
@@ -503,18 +460,12 @@ channelSubBtn.addEventListener('click', async () => {
 });
 
 socket.on('newConvMessage', (data) => {
-  if (currentConvId && data.convId === currentConvId) {
-    appendConvMessage(data.message);
-  }
+  if (currentConvId && data.convId === currentConvId) appendConvMessage(data.message);
 });
 
-// ===== MODAL: YANGI CHAT =====
+// ===== MODALLAR =====
 newChatBtn.addEventListener('click', () => searchModal.classList.remove('hidden'));
-closeSearchModal.addEventListener('click', () => {
-  searchModal.classList.add('hidden');
-  searchResults.innerHTML = '';
-  searchInput.value = '';
-});
+closeSearchModal.addEventListener('click', () => { searchModal.classList.add('hidden'); searchResults.innerHTML = ''; searchInput.value = ''; });
 
 searchBtn.addEventListener('click', async () => {
   const q = searchInput.value.trim();
@@ -523,36 +474,21 @@ searchBtn.addEventListener('click', async () => {
     const res = await fetch(`/api/users/search?q=${encodeURIComponent(q)}`);
     const data = await res.json();
     searchResults.innerHTML = '';
-    if (!data.success || data.users.length === 0) {
-      searchResults.innerHTML = '<p class="emptyConvText">Topilmadi.</p>';
-      return;
-    }
+    if (!data.success || data.users.length === 0) { searchResults.innerHTML = '<p class="emptyConvText">Topilmadi.</p>'; return; }
     data.users.forEach(user => {
       if (user.phone === currentUser.phone) return;
       const item = document.createElement('div');
       item.className = 'searchResultItem';
-      item.innerHTML = `
-        <div class="convAvatar">👤</div>
-        <div>
-          <div class="searchResultName">${user.nickname || user.phone}</div>
-          <div class="searchResultPhone">${user.username ? '@' + user.username : user.phone}</div>
-        </div>
-      `;
+      item.innerHTML = `<div class="convAvatar">👤</div><div><div class="searchResultName">${user.nickname || user.phone}</div><div class="searchResultPhone">${user.username ? '@' + user.username : user.phone}</div></div>`;
       item.addEventListener('click', async () => {
-        searchModal.classList.add('hidden');
-        searchResults.innerHTML = '';
-        searchInput.value = '';
+        searchModal.classList.add('hidden'); searchResults.innerHTML = ''; searchInput.value = '';
         try {
           const res = await fetch('/api/conversations/create', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ type: 'private', phone: currentUser.phone, targetPhone: user.phone })
           });
           const data = await res.json();
-          if (data.success) {
-            await loadConversations('private');
-            openConvPage(data.conversation);
-          }
+          if (data.success) { await loadConversations('private'); openConvPage(data.conversation); }
         } catch {}
       });
       searchResults.appendChild(item);
@@ -560,53 +496,128 @@ searchBtn.addEventListener('click', async () => {
   } catch {}
 });
 
-// ===== MODAL: YANGI GURUH =====
 newGroupBtn.addEventListener('click', () => newGroupModal.classList.remove('hidden'));
 closeGroupModal.addEventListener('click', () => { newGroupModal.classList.add('hidden'); groupNameInput.value = ''; });
-
 createGroupBtn.addEventListener('click', async () => {
   const name = groupNameInput.value.trim();
   if (!name) return alert('Guruh nomini kiriting');
   const isPublic = document.querySelector('input[name="groupType"]:checked').value === 'public';
   try {
     const res = await fetch('/api/conversations/create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'group', name: name, phone: currentUser.phone, isPublic: isPublic })
     });
     const data = await res.json();
-    if (data.success) {
-      newGroupModal.classList.add('hidden');
-      groupNameInput.value = '';
-      await loadConversations('group');
-      openConvPage(data.conversation);
-    }
+    if (data.success) { newGroupModal.classList.add('hidden'); groupNameInput.value = ''; await loadConversations('group'); openConvPage(data.conversation); }
   } catch {}
 });
 
-// ===== MODAL: YANGI KANAL =====
 newChannelBtn.addEventListener('click', () => newChannelModal.classList.remove('hidden'));
 closeChannelModal.addEventListener('click', () => { newChannelModal.classList.add('hidden'); channelNameInput.value = ''; });
-
 createChannelBtn.addEventListener('click', async () => {
   const name = channelNameInput.value.trim();
   if (!name) return alert('Kanal nomini kiriting');
   const isPublic = document.querySelector('input[name="channelType"]:checked').value === 'public';
   try {
     const res = await fetch('/api/conversations/create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'channel', name: name, phone: currentUser.phone, isPublic: isPublic })
     });
     const data = await res.json();
-    if (data.success) {
-      newChannelModal.classList.add('hidden');
-      channelNameInput.value = '';
-      await loadConversations('channel');
-      openConvPage(data.conversation);
-    }
+    if (data.success) { newChannelModal.classList.add('hidden'); channelNameInput.value = ''; await loadConversations('channel'); openConvPage(data.conversation); }
   } catch {}
 });
+
+// ===== ADMIN PANEL =====
+closeAdminModal.addEventListener('click', () => adminModal.classList.add('hidden'));
+
+document.querySelectorAll('.adminTabBtn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.adminTabBtn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    loadAdminTab(btn.dataset.tab);
+  });
+});
+
+async function openAdminPanel() {
+  adminModal.classList.remove('hidden');
+  loadAdminTab('users');
+}
+
+async function loadAdminTab(tab) {
+  adminContent.innerHTML = '<p class="emptyConvText">Yuklanmoqda...</p>';
+  try {
+    let url = tab === 'users' ? '/api/admin/users' : tab === 'rooms' ? '/api/admin/rooms' : '/api/admin/conversations';
+    const res = await fetch(url, { headers: { 'x-admin-secret': ADMIN_SECRET } });
+    const data = await res.json();
+    if (!data.success) { adminContent.innerHTML = '<p class="emptyConvText">Xatolik yuz berdi.</p>'; return; }
+
+    adminContent.innerHTML = '';
+    const items = data.users || data.rooms || data.conversations;
+
+    if (!items || items.length === 0) { adminContent.innerHTML = '<p class="emptyConvText">Bo\'sh.</p>'; return; }
+
+    items.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'adminRow';
+
+      if (tab === 'users') {
+        row.innerHTML = `
+          <div class="adminRowInfo">
+            <div class="adminRowName">${item.nickname || '—'} ${item.username ? '@' + item.username : ''}</div>
+            <div class="adminRowSub">${item.phone} | 💎${item.diamonds} | 🏅${item.rank}</div>
+          </div>
+          <div class="adminRowBtns">
+            <button class="adminBtn adminGiveBtn" data-phone="${item.phone}">+50💎</button>
+            <button class="adminBtn adminDelBtn" data-phone="${item.phone}">🗑️</button>
+          </div>
+        `;
+        row.querySelector('.adminGiveBtn').addEventListener('click', async (e) => {
+          const phone = e.target.dataset.phone;
+          const res = await fetch(`/api/admin/users/${phone}/diamonds`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-secret': ADMIN_SECRET },
+            body: JSON.stringify({ amount: 50 })
+          });
+          const d = await res.json();
+          if (d.success) { alert(`${phone} ga 50 olmos berildi`); loadAdminTab('users'); }
+        });
+        row.querySelector('.adminDelBtn').addEventListener('click', async (e) => {
+          if (!confirm('Foydalanuvchini o\'chirmoqchimisiz?')) return;
+          const phone = e.target.dataset.phone;
+          await fetch(`/api/admin/users/${phone}`, { method: 'DELETE', headers: { 'x-admin-secret': ADMIN_SECRET } });
+          loadAdminTab('users');
+        });
+      } else if (tab === 'rooms') {
+        row.innerHTML = `
+          <div class="adminRowInfo">
+            <div class="adminRowName">${item.name}</div>
+            <div class="adminRowSub">${item.category} | ${item.createdBy}</div>
+          </div>
+          <button class="adminBtn adminDelBtn" data-id="${item._id}">🗑️</button>
+        `;
+        row.querySelector('.adminDelBtn').addEventListener('click', async (e) => {
+          if (!confirm('Xonani o\'chirmoqchimisiz?')) return;
+          await fetch(`/api/admin/rooms/${e.target.dataset.id}`, { method: 'DELETE', headers: { 'x-admin-secret': ADMIN_SECRET } });
+          loadAdminTab('rooms');
+        });
+      } else {
+        row.innerHTML = `
+          <div class="adminRowInfo">
+            <div class="adminRowName">${item.name || item.type} (${item.type})</div>
+            <div class="adminRowSub">${item.createdBy} | ${item.members?.length || 0} a'zo</div>
+          </div>
+          <button class="adminBtn adminDelBtn" data-id="${item._id}">🗑️</button>
+        `;
+        row.querySelector('.adminDelBtn').addEventListener('click', async (e) => {
+          if (!confirm('Suhbatni o\'chirmoqchimisiz?')) return;
+          await fetch(`/api/admin/conversations/${e.target.dataset.id}`, { method: 'DELETE', headers: { 'x-admin-secret': ADMIN_SECRET } });
+          loadAdminTab('convs');
+        });
+      }
+      adminContent.appendChild(row);
+    });
+  } catch { adminContent.innerHTML = '<p class="emptyConvText">Xatolik yuz berdi.</p>'; }
+}
 
 // ===== KATEGORIYA SAHIFASI =====
 const categoryNames = {
@@ -630,21 +641,13 @@ async function loadCategoryRooms() {
   try {
     const res = await fetch(`/api/rooms/${currentCategory}`);
     const data = await res.json();
-    if (data.success) {
-      categoryPageRoomCount.textContent = data.rooms.length;
-      renderCategoryRooms(data.rooms);
-    }
-  } catch {
-    categoryRoomList.innerHTML = '<p class="emptyRoomsText">Xatolik yuz berdi.</p>';
-  }
+    if (data.success) { categoryPageRoomCount.textContent = data.rooms.length; renderCategoryRooms(data.rooms); }
+  } catch { categoryRoomList.innerHTML = '<p class="emptyRoomsText">Xatolik yuz berdi.</p>'; }
 }
 
 function renderCategoryRooms(rooms) {
   categoryRoomList.innerHTML = '';
-  if (rooms.length === 0) {
-    categoryRoomList.innerHTML = '<p class="emptyRoomsText">Hali xonalar yo\'q. Birinchi bo\'lib yarating!</p>';
-    return;
-  }
+  if (rooms.length === 0) { categoryRoomList.innerHTML = '<p class="emptyRoomsText">Hali xonalar yo\'q. Birinchi bo\'lib yarating!</p>'; return; }
   rooms.forEach(room => {
     const item = document.createElement('div');
     item.className = 'roomItem';
@@ -654,20 +657,13 @@ function renderCategoryRooms(rooms) {
       <span class="roomCreator">${room.createdBy}</span>
       ${isOwner ? '<span class="deleteRoomBtn">🗑️</span>' : ''}
     `;
-    item.addEventListener('click', e => {
-      if (e.target.classList.contains('deleteRoomBtn')) return;
-      openRoomPage(room);
-    });
+    item.addEventListener('click', e => { if (e.target.classList.contains('deleteRoomBtn')) return; openRoomPage(room); });
     if (isOwner) {
       item.querySelector('.deleteRoomBtn').addEventListener('click', async e => {
         e.stopPropagation();
         if (!confirm('Rostdan ham bu xonani o\'chirmoqchimisiz?')) return;
         try {
-          const res = await fetch(`/api/rooms/${room._id}`, {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phone: currentUser.phone })
-          });
+          const res = await fetch(`/api/rooms/${room._id}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone: currentUser.phone }) });
           const data = await res.json();
           if (data.success) await loadCategoryRooms();
         } catch {}
@@ -677,12 +673,7 @@ function renderCategoryRooms(rooms) {
   });
 }
 
-categoryBackBtn.addEventListener('click', () => {
-  categoryPage.classList.add('hidden');
-  unlockScroll();
-  currentCategory = null;
-  clearState();
-});
+categoryBackBtn.addEventListener('click', () => { categoryPage.classList.add('hidden'); unlockScroll(); currentCategory = null; clearState(); });
 
 categoryCreateRoomForm.addEventListener('submit', async e => {
   e.preventDefault();
@@ -690,15 +681,11 @@ categoryCreateRoomForm.addEventListener('submit', async e => {
   if (!name) return;
   try {
     const res = await fetch('/api/rooms/create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: name, category: currentCategory, phone: currentUser.phone })
     });
     const data = await res.json();
-    if (data.success) {
-      categoryRoomNameInput.value = '';
-      await loadCategoryRooms();
-    }
+    if (data.success) { categoryRoomNameInput.value = ''; await loadCategoryRooms(); }
   } catch {}
 });
 
@@ -719,10 +706,7 @@ async function openRoomPage(room) {
 
 function renderRoomMessages(messages) {
   roomPageMessages.innerHTML = '';
-  if (messages.length === 0) {
-    roomPageMessages.innerHTML = '<p class="emptyMessagesText">Hali xabarlar yo\'q.</p>';
-    return;
-  }
+  if (messages.length === 0) { roomPageMessages.innerHTML = '<p class="emptyMessagesText">Hali xabarlar yo\'q.</p>'; return; }
   messages.forEach(msg => appendRoomMessage(msg));
 }
 
@@ -735,6 +719,8 @@ function appendRoomMessage(msg) {
     contentHtml = `<span class="messageSticker">${msg.text.slice(9, -1)}</span>`;
   } else if (msg.text.startsWith('[gif:') && msg.text.endsWith(']')) {
     contentHtml = `<img class="messageGif" src="${msg.text.slice(5, -1)}" alt="gif">`;
+  } else if (msg.text.startsWith('[image:') && msg.text.endsWith(']')) {
+    contentHtml = `<img class="messageImage" src="${msg.text.slice(7, -1)}" alt="rasm">`;
   } else {
     contentHtml = `<p class="messageText">${msg.text}</p>`;
   }
@@ -743,27 +729,14 @@ function appendRoomMessage(msg) {
   roomPageMessages.scrollTop = roomPageMessages.scrollHeight;
 }
 
-roomBackBtn.addEventListener('click', () => {
-  roomPage.classList.add('hidden');
-  closeAllRoomPanels();
-  saveState('category', { category: currentCategory });
-});
+roomBackBtn.addEventListener('click', () => { roomPage.classList.add('hidden'); closeAllRoomPanels(); saveState('category', { category: currentCategory }); });
 
 roomDeleteBtn.addEventListener('click', async () => {
   if (!confirm('Rostdan ham bu xonani o\'chirmoqchimisiz?')) return;
   try {
-    const res = await fetch(`/api/rooms/${currentRoomId}`, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone: currentUser.phone })
-    });
+    const res = await fetch(`/api/rooms/${currentRoomId}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone: currentUser.phone }) });
     const data = await res.json();
-    if (data.success) {
-      roomPage.classList.add('hidden');
-      clearState();
-      saveState('category', { category: currentCategory });
-      await loadCategoryRooms();
-    }
+    if (data.success) { roomPage.classList.add('hidden'); clearState(); saveState('category', { category: currentCategory }); await loadCategoryRooms(); }
   } catch {}
 });
 
@@ -783,30 +756,30 @@ roomMessageInput.addEventListener('keydown', e => {
   }
 });
 
+// Room rasm yuborish
+roomImageInput.addEventListener('change', async () => {
+  const file = roomImageInput.files[0];
+  if (!file) return;
+  const imageData = await compressImage(file);
+  socket.emit('sendMessage', { roomId: currentRoomId, text: '', phone: currentUser.phone, imageData: imageData });
+  roomImageInput.value = '';
+});
+
 roomVoiceBtn.addEventListener('click', () => alert('Ovozli chat tez orada!'));
 
 socket.on('newMessage', msg => {
-  if (currentRoomId && msg.roomId && currentRoomId.toString() === msg.roomId.toString()) {
-    appendRoomMessage(msg);
-  }
+  if (currentRoomId && msg.roomId && currentRoomId.toString() === msg.roomId.toString()) appendRoomMessage(msg);
 });
 
-socket.on('roomFull', () => {
-  alert('Bu xona to\'la (12/12).');
-  roomPage.classList.add('hidden');
-  saveState('category', { category: currentCategory });
-});
-
+socket.on('roomFull', () => { alert('Bu xona to\'la (12/12).'); roomPage.classList.add('hidden'); saveState('category', { category: currentCategory }); });
 socket.on('roomUserCount', count => { roomPageCount.textContent = count; });
 
-// ===== KATEGORIYA KARTOCHKALARI =====
 document.querySelectorAll('.categoryCard').forEach(card => {
   card.addEventListener('click', async () => {
     const category = card.dataset.category;
     try {
       const res = await fetch('/api/category-enter', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone: currentUser.phone })
       });
       const data = await res.json();
@@ -815,21 +788,15 @@ document.querySelectorAll('.categoryCard').forEach(card => {
         localStorage.setItem('user', JSON.stringify(data.user));
         profileDiamonds.textContent = data.user.diamonds;
         await openCategoryPage(category);
-      } else {
-        alert(data.error);
-      }
-    } catch {
-      alert('Xatolik yuz berdi.');
-    }
+      } else { alert(data.error); }
+    } catch { alert('Xatolik yuz berdi.'); }
   });
 });
 
-// ===== ROOM PANELLARI =====
+// ===== PANELLAR =====
 function closeAllRoomPanels() {
-  roomMediaPanel.classList.add('hidden');
-  roomEmojiPanel.classList.add('hidden');
-  roomStickerPanel.classList.add('hidden');
-  roomGifPanel.classList.add('hidden');
+  roomMediaPanel.classList.add('hidden'); roomEmojiPanel.classList.add('hidden');
+  roomStickerPanel.classList.add('hidden'); roomGifPanel.classList.add('hidden');
 }
 
 function toggleRoomPanel(panel) {
@@ -845,27 +812,16 @@ roomGifBtn.addEventListener('click', () => toggleRoomPanel(roomGifPanel));
 document.querySelectorAll('#roomEmojiPanel .emojiItem').forEach(item => {
   item.addEventListener('click', () => { roomMessageInput.value += item.textContent; closeAllRoomPanels(); roomMessageInput.focus(); });
 });
-
 document.querySelectorAll('#roomStickerPanel .stickerItem').forEach(item => {
-  item.addEventListener('click', () => {
-    socket.emit('sendMessage', { roomId: currentRoomId, text: `[sticker:${item.dataset.sticker}]`, phone: currentUser.phone });
-    closeAllRoomPanels();
-  });
+  item.addEventListener('click', () => { socket.emit('sendMessage', { roomId: currentRoomId, text: `[sticker:${item.dataset.sticker}]`, phone: currentUser.phone }); closeAllRoomPanels(); });
 });
-
 document.querySelectorAll('#roomGifPanel .gifItem').forEach(item => {
-  item.addEventListener('click', () => {
-    socket.emit('sendMessage', { roomId: currentRoomId, text: `[gif:${item.src}]`, phone: currentUser.phone });
-    closeAllRoomPanels();
-  });
+  item.addEventListener('click', () => { socket.emit('sendMessage', { roomId: currentRoomId, text: `[gif:${item.src}]`, phone: currentUser.phone }); closeAllRoomPanels(); });
 });
 
-// ===== CONV PANELLARI =====
 function closeAllConvPanels() {
-  convMediaPanel.classList.add('hidden');
-  convEmojiPanel.classList.add('hidden');
-  convStickerPanel.classList.add('hidden');
-  convGifPanel.classList.add('hidden');
+  convMediaPanel.classList.add('hidden'); convEmojiPanel.classList.add('hidden');
+  convStickerPanel.classList.add('hidden'); convGifPanel.classList.add('hidden');
 }
 
 function toggleConvPanel(panel) {
@@ -881,19 +837,11 @@ convGifBtn.addEventListener('click', () => toggleConvPanel(convGifPanel));
 document.querySelectorAll('#convEmojiPanel .emojiItem').forEach(item => {
   item.addEventListener('click', () => { convMessageInput.value += item.textContent; closeAllConvPanels(); convMessageInput.focus(); });
 });
-
 document.querySelectorAll('#convStickerPanel .stickerItem').forEach(item => {
-  item.addEventListener('click', () => {
-    socket.emit('sendConvMessage', { convId: currentConvId, text: `[sticker:${item.dataset.sticker}]`, phone: currentUser.phone, senderNickname: currentUser.nickname || currentUser.phone });
-    closeAllConvPanels();
-  });
+  item.addEventListener('click', () => { socket.emit('sendConvMessage', { convId: currentConvId, text: `[sticker:${item.dataset.sticker}]`, phone: currentUser.phone, senderNickname: currentUser.nickname || currentUser.phone }); closeAllConvPanels(); });
 });
-
 document.querySelectorAll('#convGifPanel .gifItem').forEach(item => {
-  item.addEventListener('click', () => {
-    socket.emit('sendConvMessage', { convId: currentConvId, text: `[gif:${item.src}]`, phone: currentUser.phone, senderNickname: currentUser.nickname || currentUser.phone });
-    closeAllConvPanels();
-  });
+  item.addEventListener('click', () => { socket.emit('sendConvMessage', { convId: currentConvId, text: `[gif:${item.src}]`, phone: currentUser.phone, senderNickname: currentUser.nickname || currentUser.phone }); closeAllConvPanels(); });
 });
 
 // ===== HOLATNI TIKLASH =====

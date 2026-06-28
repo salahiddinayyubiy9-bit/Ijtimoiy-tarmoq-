@@ -56,7 +56,6 @@
   </div>
 
   <div id="mainSection" class="hidden">
-
     <nav class="bottomNav" id="bottomNav">
       <button class="navBtn" id="navGroups">
         <span class="navIcon">👥</span>
@@ -86,14 +85,8 @@
           <p class="profilePhone" id="profilePhone"></p>
         </div>
         <div class="profileStats">
-          <div class="statBadge diamondBadge">
-            <span class="statIcon">💎</span>
-            <span id="profileDiamonds"></span>
-          </div>
-          <div class="statBadge rankBadge">
-            <span class="statIcon">🏅</span>
-            <span id="profileRank"></span>
-          </div>
+          <div class="statBadge diamondBadge"><span class="statIcon">💎</span><span id="profileDiamonds"></span></div>
+          <div class="statBadge rankBadge"><span class="statIcon">🏅</span><span id="profileRank"></span></div>
         </div>
         <div class="profileBtns">
           <button id="dailyClaimBtn">🎁 Kunlik olmos</button>
@@ -116,30 +109,22 @@
     </div>
 
     <div id="chatsTab" class="tabContent hidden">
-      <div class="tabHeader">
-        <h2 class="tabTitle">Chatlar</h2>
-        <button class="tabAddBtn" id="newChatBtn">+</button>
-      </div>
+      <div class="tabHeader"><h2 class="tabTitle">Chatlar</h2><button class="tabAddBtn" id="newChatBtn">+</button></div>
       <div class="convList" id="chatsList"></div>
     </div>
 
     <div id="groupsTab" class="tabContent hidden">
-      <div class="tabHeader">
-        <h2 class="tabTitle">Guruhlar</h2>
-        <button class="tabAddBtn" id="newGroupBtn">+</button>
-      </div>
+      <div class="tabHeader"><h2 class="tabTitle">Guruhlar</h2><button class="tabAddBtn" id="newGroupBtn">+</button></div>
       <div class="convList" id="groupsList"></div>
     </div>
 
     <div id="channelsTab" class="tabContent hidden">
-      <div class="tabHeader">
-        <h2 class="tabTitle">Kanallar</h2>
-        <button class="tabAddBtn" id="newChannelBtn">+</button>
-      </div>
+      <div class="tabHeader"><h2 class="tabTitle">Kanallar</h2><button class="tabAddBtn" id="newChannelBtn">+</button></div>
       <div class="convList" id="channelsList"></div>
     </div>
   </div>
 
+  <!-- KATEGORIYA SAHIFASI -->
   <div id="categoryPage" class="hidden fullPage">
     <div class="fullPageHeader">
       <button class="headerBackBtn" id="categoryBackBtn">← Chiqish</button>
@@ -158,6 +143,7 @@
     </div>
   </div>
 
+  <!-- XONA SAHIFASI -->
   <div id="roomPage" class="hidden fullPage">
     <div class="fullPageHeader">
       <button class="headerBackBtn" id="roomBackBtn">← Yopish</button>
@@ -185,16 +171,11 @@
         <span class="emojiItem">😏</span><span class="emojiItem">🤝</span><span class="emojiItem">👋</span>
       </div>
       <div id="roomStickerPanel" class="hidden mediaSubPanel">
-        <span class="stickerItem" data-sticker="🎉">🎉</span>
-        <span class="stickerItem" data-sticker="🏆">🏆</span>
-        <span class="stickerItem" data-sticker="💖">💖</span>
-        <span class="stickerItem" data-sticker="🌈">🌈</span>
-        <span class="stickerItem" data-sticker="🎸">🎸</span>
-        <span class="stickerItem" data-sticker="🦁">🦁</span>
-        <span class="stickerItem" data-sticker="🐉">🐉</span>
-        <span class="stickerItem" data-sticker="👑">👑</span>
-        <span class="stickerItem" data-sticker="🎭">🎭</span>
-        <span class="stickerItem" data-sticker="🌙">🌙</span>
+        <span class="stickerItem" data-sticker="🎉">🎉</span><span class="stickerItem" data-sticker="🏆">🏆</span>
+        <span class="stickerItem" data-sticker="💖">💖</span><span class="stickerItem" data-sticker="🌈">🌈</span>
+        <span class="stickerItem" data-sticker="🎸">🎸</span><span class="stickerItem" data-sticker="🦁">🦁</span>
+        <span class="stickerItem" data-sticker="🐉">🐉</span><span class="stickerItem" data-sticker="👑">👑</span>
+        <span class="stickerItem" data-sticker="🎭">🎭</span><span class="stickerItem" data-sticker="🌙">🌙</span>
       </div>
       <div id="roomGifPanel" class="hidden mediaSubPanel">
         <img class="gifItem" src="https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif" alt="gif">
@@ -216,6 +197,7 @@
         <button type="button" id="roomGifBtn">GIF</button>
       </div>
       <div class="roomInputRow">
+        <label class="imagePickerBtn" id="roomImagePickerBtn">📎<input type="file" id="roomImageInput" accept="image/*" style="display:none"></label>
         <input type="text" id="roomMessageInput" placeholder="Xabar yozing...">
         <button type="button" id="roomVoiceBtn">🎤</button>
         <button type="button" id="roomSendBtn">➤</button>
@@ -223,6 +205,7 @@
     </div>
   </div>
 
+  <!-- SUHBAT SAHIFASI -->
   <div id="convPage" class="hidden fullPage">
     <div class="fullPageHeader">
       <button class="headerBackBtn" id="convBackBtn">← Yopish</button>
@@ -249,16 +232,11 @@
         <span class="emojiItem">🤝</span><span class="emojiItem">👋</span><span class="emojiItem">🔥</span>
       </div>
       <div id="convStickerPanel" class="hidden mediaSubPanel">
-        <span class="stickerItem" data-sticker="🎉">🎉</span>
-        <span class="stickerItem" data-sticker="🏆">🏆</span>
-        <span class="stickerItem" data-sticker="💖">💖</span>
-        <span class="stickerItem" data-sticker="🌈">🌈</span>
-        <span class="stickerItem" data-sticker="🎸">🎸</span>
-        <span class="stickerItem" data-sticker="🦁">🦁</span>
-        <span class="stickerItem" data-sticker="🐉">🐉</span>
-        <span class="stickerItem" data-sticker="👑">👑</span>
-        <span class="stickerItem" data-sticker="🎭">🎭</span>
-        <span class="stickerItem" data-sticker="🌙">🌙</span>
+        <span class="stickerItem" data-sticker="🎉">🎉</span><span class="stickerItem" data-sticker="🏆">🏆</span>
+        <span class="stickerItem" data-sticker="💖">💖</span><span class="stickerItem" data-sticker="🌈">🌈</span>
+        <span class="stickerItem" data-sticker="🎸">🎸</span><span class="stickerItem" data-sticker="🦁">🦁</span>
+        <span class="stickerItem" data-sticker="🐉">🐉</span><span class="stickerItem" data-sticker="👑">👑</span>
+        <span class="stickerItem" data-sticker="🎭">🎭</span><span class="stickerItem" data-sticker="🌙">🌙</span>
       </div>
       <div id="convGifPanel" class="hidden mediaSubPanel">
         <img class="gifItem" src="https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif" alt="gif">
@@ -280,6 +258,7 @@
         <button type="button" id="convGifBtn">GIF</button>
       </div>
       <div class="roomInputRow">
+        <label class="imagePickerBtn" id="convImagePickerBtn">📎<input type="file" id="convImageInput" accept="image/*" style="display:none"></label>
         <input type="text" id="convMessageInput" placeholder="Xabar yozing...">
         <button type="button" id="convVoiceBtn">🎤</button>
         <button type="button" id="convSendBtn">➤</button>
@@ -290,12 +269,10 @@
     </div>
   </div>
 
+  <!-- MODALLAR -->
   <div id="searchModal" class="hidden modalOverlay">
     <div class="modalCard">
-      <div class="modalHeader">
-        <h3>Foydalanuvchi qidirish</h3>
-        <button class="modalCloseBtn" id="closeSearchModal">✕</button>
-      </div>
+      <div class="modalHeader"><h3>Foydalanuvchi qidirish</h3><button class="modalCloseBtn" id="closeSearchModal">✕</button></div>
       <input type="text" class="modalInput" id="searchInput" placeholder="Telefon yoki @username">
       <button class="authBtn" id="searchBtn">Qidirish</button>
       <div id="searchResults" class="searchResults"></div>
@@ -304,10 +281,7 @@
 
   <div id="newGroupModal" class="hidden modalOverlay">
     <div class="modalCard">
-      <div class="modalHeader">
-        <h3>Yangi guruh yaratish</h3>
-        <button class="modalCloseBtn" id="closeGroupModal">✕</button>
-      </div>
+      <div class="modalHeader"><h3>Yangi guruh yaratish</h3><button class="modalCloseBtn" id="closeGroupModal">✕</button></div>
       <input type="text" class="modalInput" id="groupNameInput" placeholder="Guruh nomi">
       <div class="modalRadioGroup">
         <label class="modalRadio"><input type="radio" name="groupType" value="private" checked> 🔒 Shaxsiy</label>
@@ -319,16 +293,29 @@
 
   <div id="newChannelModal" class="hidden modalOverlay">
     <div class="modalCard">
-      <div class="modalHeader">
-        <h3>Yangi kanal yaratish</h3>
-        <button class="modalCloseBtn" id="closeChannelModal">✕</button>
-      </div>
+      <div class="modalHeader"><h3>Yangi kanal yaratish</h3><button class="modalCloseBtn" id="closeChannelModal">✕</button></div>
       <input type="text" class="modalInput" id="channelNameInput" placeholder="Kanal nomi">
       <div class="modalRadioGroup">
         <label class="modalRadio"><input type="radio" name="channelType" value="private" checked> 🔒 Shaxsiy</label>
         <label class="modalRadio"><input type="radio" name="channelType" value="public"> 🌐 Ommaviy</label>
       </div>
       <button class="authBtn" id="createChannelBtn">Yaratish</button>
+    </div>
+  </div>
+
+  <!-- ADMIN PANEL MODAL -->
+  <div id="adminModal" class="hidden modalOverlay">
+    <div class="modalCard adminCard">
+      <div class="modalHeader">
+        <h3>Admin panel</h3>
+        <button class="modalCloseBtn" id="closeAdminModal">✕</button>
+      </div>
+      <div class="adminTabs">
+        <button class="adminTabBtn active" data-tab="users">Foydalanuvchilar</button>
+        <button class="adminTabBtn" data-tab="rooms">Xonalar</button>
+        <button class="adminTabBtn" data-tab="convs">Suhbatlar</button>
+      </div>
+      <div id="adminContent" class="adminContent"></div>
     </div>
   </div>
 

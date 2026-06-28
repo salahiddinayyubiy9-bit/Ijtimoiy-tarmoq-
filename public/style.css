@@ -932,3 +932,98 @@ body.no-scroll {
 }
 
 .deleteRoomBtn:hover { background-color: #2a2e38; }
+
+.imagePickerBtn {
+  background-color: #0f1115;
+  border: 1px solid #2a2e38;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  color: #e8e8e8;
+}
+
+.imagePickerBtn:hover {
+  border-color: #5865F2;
+}
+
+.messageImage {
+  max-width: 220px;
+  max-height: 220px;
+  border-radius: 10px;
+  display: block;
+  cursor: pointer;
+}
+
+.adminCard {
+  max-width: 500px;
+  width: 95%;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.adminTabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.adminTabBtn {
+  background-color: #0f1115;
+  border: 1px solid #2a2e38;
+  border-radius: 8px;
+  padding: 6px 12px;
+  color: #b0b3b8;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.adminTabBtn.active {
+  background-color: #5865F2;
+  color: #fff;
+  border-color: #5865F2;
+}
+
+.adminContent {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.adminRow {
+  background-color: #0f1115;
+  border: 1px solid #2a2e38;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.adminRowInfo { flex: 1; min-width: 0; }
+.adminRowName { color: #e8e8e8; font-size: 0.9rem; font-weight: 600; }
+.adminRowSub { color: #6b7280; font-size: 0.78rem; margin-top: 2px; }
+
+.adminRowBtns { display: flex; gap: 6px; }
+
+.adminBtn {
+  background-color: #2a2e38;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  color: #e8e8e8;
+}
+
+.adminGiveBtn { color: #4ade80; }
+.adminDelBtn { color: #f87171; }
