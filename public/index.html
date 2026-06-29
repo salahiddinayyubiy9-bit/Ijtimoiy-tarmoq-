@@ -57,28 +57,20 @@
 
   <div id="mainSection" class="hidden">
     <nav class="bottomNav" id="bottomNav">
-      <button class="navBtn" id="navGroups">
-        <span class="navIcon">👥</span>
-        <span class="navLabel">Guruhlar</span>
-      </button>
-      <button class="navBtn" id="navChats">
-        <span class="navIcon">💬</span>
-        <span class="navLabel">Chatlar</span>
-      </button>
-      <button class="navBtn active" id="navHome">
-        <span class="navIcon">🏠</span>
-        <span class="navLabel">Asosiy</span>
-      </button>
-      <button class="navBtn" id="navChannels">
-        <span class="navIcon">📢</span>
-        <span class="navLabel">Kanallar</span>
-      </button>
+      <button class="navBtn" id="navGroups"><span class="navIcon">👥</span><span class="navLabel">Guruhlar</span></button>
+      <button class="navBtn" id="navChats"><span class="navIcon">💬</span><span class="navLabel">Chatlar</span></button>
+      <button class="navBtn active" id="navHome"><span class="navIcon">🏠</span><span class="navLabel">Asosiy</span></button>
+      <button class="navBtn" id="navChannels"><span class="navIcon">📢</span><span class="navLabel">Kanallar</span></button>
     </nav>
 
     <div id="homeTab" class="tabContent">
       <div class="profileCard">
         <div class="profileAvatarWrap">
-          <div class="profileAvatar" id="profileAvatar">👤</div>
+          <label class="profileAvatarLabel">
+            <div class="profileAvatar" id="profileAvatar">👤</div>
+            <div class="profileAvatarEdit">📷</div>
+            <input type="file" id="profileImageInput" accept="image/*" style="display:none">
+          </label>
         </div>
         <div class="profileInfo">
           <p class="profileNickname" id="profileNickname"></p>
@@ -112,19 +104,17 @@
       <div class="tabHeader"><h2 class="tabTitle">Chatlar</h2><button class="tabAddBtn" id="newChatBtn">+</button></div>
       <div class="convList" id="chatsList"></div>
     </div>
-
     <div id="groupsTab" class="tabContent hidden">
       <div class="tabHeader"><h2 class="tabTitle">Guruhlar</h2><button class="tabAddBtn" id="newGroupBtn">+</button></div>
       <div class="convList" id="groupsList"></div>
     </div>
-
     <div id="channelsTab" class="tabContent hidden">
       <div class="tabHeader"><h2 class="tabTitle">Kanallar</h2><button class="tabAddBtn" id="newChannelBtn">+</button></div>
       <div class="convList" id="channelsList"></div>
     </div>
   </div>
 
-  <!-- KATEGORIYA SAHIFASI -->
+  <!-- KATEGORIYA -->
   <div id="categoryPage" class="hidden fullPage">
     <div class="fullPageHeader">
       <button class="headerBackBtn" id="categoryBackBtn">← Chiqish</button>
@@ -143,7 +133,7 @@
     </div>
   </div>
 
-  <!-- XONA SAHIFASI -->
+  <!-- XONA -->
   <div id="roomPage" class="hidden fullPage">
     <div class="fullPageHeader">
       <button class="headerBackBtn" id="roomBackBtn">← Yopish</button>
@@ -197,15 +187,16 @@
         <button type="button" id="roomGifBtn">GIF</button>
       </div>
       <div class="roomInputRow">
-        <label class="imagePickerBtn" id="roomImagePickerBtn">📎<input type="file" id="roomImageInput" accept="image/*" style="display:none"></label>
+        <label class="imagePickerBtn">📎<input type="file" id="roomImageInput" accept="image/*" style="display:none"></label>
         <input type="text" id="roomMessageInput" placeholder="Xabar yozing...">
-        <button type="button" id="roomVoiceBtn">🎤</button>
+        <button type="button" id="roomVoiceBtn" class="voiceBtn">🎤</button>
         <button type="button" id="roomSendBtn">➤</button>
       </div>
     </div>
+    <div id="roomVoiceIndicator" class="hidden voiceIndicator">🔴 Yozilmoqda...</div>
   </div>
 
-  <!-- SUHBAT SAHIFASI -->
+  <!-- SUHBAT -->
   <div id="convPage" class="hidden fullPage">
     <div class="fullPageHeader">
       <button class="headerBackBtn" id="convBackBtn">← Yopish</button>
@@ -214,8 +205,13 @@
         <span class="roomHeaderMeta" id="convPageMeta"></span>
       </div>
       <div class="headerRight">
+        <button class="voiceChatBtn" id="voiceChatBtn">📞</button>
         <button class="deleteRoomPageBtn hidden" id="convDeleteBtn">🗑️</button>
       </div>
+    </div>
+    <div id="voiceChatBar" class="hidden voiceChatBar">
+      <span id="voiceChatStatus">📞 Ovozli chat...</span>
+      <button id="endVoiceChatBtn" class="endVoiceChatBtn">📵 Tugatish</button>
     </div>
     <div class="roomMessages" id="convPageMessages"></div>
     <div id="convMediaPanel" class="hidden">
@@ -258,15 +254,16 @@
         <button type="button" id="convGifBtn">GIF</button>
       </div>
       <div class="roomInputRow">
-        <label class="imagePickerBtn" id="convImagePickerBtn">📎<input type="file" id="convImageInput" accept="image/*" style="display:none"></label>
+        <label class="imagePickerBtn">📎<input type="file" id="convImageInput" accept="image/*" style="display:none"></label>
         <input type="text" id="convMessageInput" placeholder="Xabar yozing...">
-        <button type="button" id="convVoiceBtn">🎤</button>
+        <button type="button" id="convVoiceBtn" class="voiceBtn">🎤</button>
         <button type="button" id="convSendBtn">➤</button>
       </div>
     </div>
     <div id="channelSubscribeArea" class="hidden channelSubArea">
       <button id="channelSubBtn" class="channelSubBtn">Obuna bo'lish</button>
     </div>
+    <div id="convVoiceIndicator" class="hidden voiceIndicator">🔴 Yozilmoqda...</div>
   </div>
 
   <!-- MODALLAR -->
@@ -278,7 +275,6 @@
       <div id="searchResults" class="searchResults"></div>
     </div>
   </div>
-
   <div id="newGroupModal" class="hidden modalOverlay">
     <div class="modalCard">
       <div class="modalHeader"><h3>Yangi guruh yaratish</h3><button class="modalCloseBtn" id="closeGroupModal">✕</button></div>
@@ -290,7 +286,6 @@
       <button class="authBtn" id="createGroupBtn">Yaratish</button>
     </div>
   </div>
-
   <div id="newChannelModal" class="hidden modalOverlay">
     <div class="modalCard">
       <div class="modalHeader"><h3>Yangi kanal yaratish</h3><button class="modalCloseBtn" id="closeChannelModal">✕</button></div>
@@ -302,14 +297,9 @@
       <button class="authBtn" id="createChannelBtn">Yaratish</button>
     </div>
   </div>
-
-  <!-- ADMIN PANEL MODAL -->
   <div id="adminModal" class="hidden modalOverlay">
     <div class="modalCard adminCard">
-      <div class="modalHeader">
-        <h3>Admin panel</h3>
-        <button class="modalCloseBtn" id="closeAdminModal">✕</button>
-      </div>
+      <div class="modalHeader"><h3>Admin panel</h3><button class="modalCloseBtn" id="closeAdminModal">✕</button></div>
       <div class="adminTabs">
         <button class="adminTabBtn active" data-tab="users">Foydalanuvchilar</button>
         <button class="adminTabBtn" data-tab="rooms">Xonalar</button>
