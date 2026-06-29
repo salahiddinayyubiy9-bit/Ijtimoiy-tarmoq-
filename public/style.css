@@ -1143,3 +1143,176 @@ body.no-scroll {
   font-size: 0.8rem;
   cursor: pointer;
 }
+
+.searchMsgBtn {
+  background-color: transparent;
+  border: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 4px 6px;
+  color: #e8e8e8;
+}
+
+.msgSearchBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background-color: #1a1d24;
+  border-bottom: 1px solid #2a2e38;
+  flex-shrink: 0;
+}
+
+.msgSearchInput {
+  flex: 1;
+  background-color: #0f1115;
+  border: 1px solid #2a2e38;
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: #e8e8e8;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.msgSearchInput:focus { border-color: #5865F2; }
+
+.msgSearchClose {
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.replyPanel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background-color: #1a2040;
+  border-left: 3px solid #5865F2;
+  flex-shrink: 0;
+}
+
+.replyContent { display: flex; gap: 6px; align-items: center; flex: 1; min-width: 0; }
+.replyLabel { color: #5865F2; font-size: 0.8rem; font-weight: 600; white-space: nowrap; }
+.replyText { color: #b0b3b8; font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.cancelReplyBtn {
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 2px 6px;
+}
+
+.msgReplyBox {
+  background-color: #1a2040;
+  border-left: 3px solid #5865F2;
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin-bottom: 4px;
+  font-size: 0.78rem;
+  color: #b0b3b8;
+}
+
+.msgMenu {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #1a1d24;
+  border: 1px solid #2a2e38;
+  border-radius: 14px;
+  z-index: 300;
+  overflow: hidden;
+  min-width: 200px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+}
+
+.msgMenuBtn {
+  display: block;
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #2a2e38;
+  padding: 14px 20px;
+  color: #e8e8e8;
+  font-size: 0.95rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.msgMenuBtn:last-child { border-bottom: none; }
+.msgMenuBtn:hover { background-color: #2a2e38; }
+.msgMenuDelete { color: #f87171; }
+.msgMenuClose { color: #6b7280; }
+
+.msgHighlight {
+  background-color: #2a3050 !important;
+  transition: background-color 0.3s;
+}
+
+.discoverList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-top: 4px;
+}
+
+.discoverItem {
+  background-color: #0f1115;
+  border: 1px solid #2a2e38;
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.discoverItemInfo { flex: 1; min-width: 0; }
+.discoverItemName { color: #e8e8e8; font-size: 0.9rem; font-weight: 600; }
+.discoverItemMeta { color: #6b7280; font-size: 0.78rem; margin-top: 2px; }
+
+.discoverJoinBtn {
+  background-color: #5865F2;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 14px;
+  color: white;
+  font-size: 0.8rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.discoverJoinBtn.joined {
+  background-color: #2a2e38;
+  color: #b0b3b8;
+}
+
+.groupActionsBar {
+  display: flex;
+  gap: 8px;
+  padding: 6px 12px;
+  background-color: #1a1d24;
+  border-bottom: 1px solid #2a2e38;
+  flex-shrink: 0;
+}
+
+.groupActionBtn {
+  background-color: #2a2e38;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 12px;
+  color: #e8e8e8;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.groupActionBtn:hover { background-color: #3a3e48; }
+.groupLeaveBtn { color: #f87171; }

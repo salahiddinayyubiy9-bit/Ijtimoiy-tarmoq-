@@ -105,11 +105,23 @@
       <div class="convList" id="chatsList"></div>
     </div>
     <div id="groupsTab" class="tabContent hidden">
-      <div class="tabHeader"><h2 class="tabTitle">Guruhlar</h2><button class="tabAddBtn" id="newGroupBtn">+</button></div>
+      <div class="tabHeader">
+        <h2 class="tabTitle">Guruhlar</h2>
+        <div style="display:flex;gap:8px;">
+          <button class="tabAddBtn" id="discoverGroupsBtn" style="background:#2a2e38;font-size:1rem;">🔍</button>
+          <button class="tabAddBtn" id="newGroupBtn">+</button>
+        </div>
+      </div>
       <div class="convList" id="groupsList"></div>
     </div>
     <div id="channelsTab" class="tabContent hidden">
-      <div class="tabHeader"><h2 class="tabTitle">Kanallar</h2><button class="tabAddBtn" id="newChannelBtn">+</button></div>
+      <div class="tabHeader">
+        <h2 class="tabTitle">Kanallar</h2>
+        <div style="display:flex;gap:8px;">
+          <button class="tabAddBtn" id="discoverChannelsBtn" style="background:#2a2e38;font-size:1rem;">🔍</button>
+          <button class="tabAddBtn" id="newChannelBtn">+</button>
+        </div>
+      </div>
       <div class="convList" id="channelsList"></div>
     </div>
   </div>
@@ -205,6 +217,7 @@
         <span class="roomHeaderMeta" id="convPageMeta"></span>
       </div>
       <div class="headerRight">
+        <button class="searchMsgBtn" id="searchMsgBtn">🔍</button>
         <button class="voiceChatBtn" id="voiceChatBtn">📞</button>
         <button class="deleteRoomPageBtn hidden" id="convDeleteBtn">🗑️</button>
       </div>
@@ -212,6 +225,19 @@
     <div id="voiceChatBar" class="hidden voiceChatBar">
       <span id="voiceChatStatus">📞 Ovozli chat...</span>
       <button id="endVoiceChatBtn" class="endVoiceChatBtn">📵 Tugatish</button>
+    </div>
+    <!-- Xabar qidiruv paneli (#15) -->
+    <div id="msgSearchBar" class="hidden msgSearchBar">
+      <input type="text" id="msgSearchInput" placeholder="Xabarlarda qidirish..." class="msgSearchInput">
+      <button id="msgSearchClose" class="msgSearchClose">✕</button>
+    </div>
+    <!-- Reply panel -->
+    <div id="replyPanel" class="hidden replyPanel">
+      <div class="replyContent">
+        <span class="replyLabel">↩️ Javob:</span>
+        <span id="replyText" class="replyText"></span>
+      </div>
+      <button id="cancelReplyBtn" class="cancelReplyBtn">✕</button>
     </div>
     <div class="roomMessages" id="convPageMessages"></div>
     <div id="convMediaPanel" class="hidden">
@@ -266,6 +292,14 @@
     <div id="convVoiceIndicator" class="hidden voiceIndicator">🔴 Yozilmoqda...</div>
   </div>
 
+  <!-- XABAR MENYUSI (uzoq bosish) -->
+  <div id="msgMenu" class="hidden msgMenu">
+    <button class="msgMenuBtn" id="msgMenuReply">↩️ Javob berish</button>
+    <button class="msgMenuBtn" id="msgMenuForward">➡️ Yuborish</button>
+    <button class="msgMenuBtn msgMenuDelete hidden" id="msgMenuDelete">🗑️ O'chirish</button>
+    <button class="msgMenuBtn msgMenuClose" id="msgMenuClose">✕ Yopish</button>
+  </div>
+
   <!-- MODALLAR -->
   <div id="searchModal" class="hidden modalOverlay">
     <div class="modalCard">
@@ -275,6 +309,7 @@
       <div id="searchResults" class="searchResults"></div>
     </div>
   </div>
+
   <div id="newGroupModal" class="hidden modalOverlay">
     <div class="modalCard">
       <div class="modalHeader"><h3>Yangi guruh yaratish</h3><button class="modalCloseBtn" id="closeGroupModal">✕</button></div>
@@ -286,6 +321,7 @@
       <button class="authBtn" id="createGroupBtn">Yaratish</button>
     </div>
   </div>
+
   <div id="newChannelModal" class="hidden modalOverlay">
     <div class="modalCard">
       <div class="modalHeader"><h3>Yangi kanal yaratish</h3><button class="modalCloseBtn" id="closeChannelModal">✕</button></div>
@@ -297,6 +333,36 @@
       <button class="authBtn" id="createChannelBtn">Yaratish</button>
     </div>
   </div>
+
+  <!-- A'ZO QO'SHISH MODALI (#4) -->
+  <div id="addMemberModal" class="hidden modalOverlay">
+    <div class="modalCard">
+      <div class="modalHeader"><h3>A'zo qo'shish</h3><button class="modalCloseBtn" id="closeAddMemberModal">✕</button></div>
+      <input type="text" class="modalInput" id="addMemberInput" placeholder="Telefon yoki @username">
+      <button class="authBtn" id="addMemberBtn">Qo'shish</button>
+      <p id="addMemberMsg" class="authError hidden"></p>
+    </div>
+  </div>
+
+  <!-- KASHFIYOT MODALI (#16) -->
+  <div id="discoverModal" class="hidden modalOverlay">
+    <div class="modalCard adminCard">
+      <div class="modalHeader">
+        <h3 id="discoverTitle">Ommaviy guruhlar</h3>
+        <button class="modalCloseBtn" id="closeDiscoverModal">✕</button>
+      </div>
+      <div id="discoverList" class="discoverList"></div>
+    </div>
+  </div>
+
+  <!-- FORWARD MODALI (#17) -->
+  <div id="forwardModal" class="hidden modalOverlay">
+    <div class="modalCard adminCard">
+      <div class="modalHeader"><h3>Xabarni yuborish</h3><button class="modalCloseBtn" id="closeForwardModal">✕</button></div>
+      <div id="forwardList" class="discoverList"></div>
+    </div>
+  </div>
+
   <div id="adminModal" class="hidden modalOverlay">
     <div class="modalCard adminCard">
       <div class="modalHeader"><h3>Admin panel</h3><button class="modalCloseBtn" id="closeAdminModal">✕</button></div>

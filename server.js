@@ -90,7 +90,6 @@ app.post('/api/setup-profile', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ===== PROFIL RASM =====
 app.post('/api/profile/update-image', async (req, res) => {
   const { phone, imageData } = req.body;
   if (!phone || !imageData) return res.status(400).json({ error: 'Ma\'lumotlar yetarli emas' });
@@ -249,6 +248,65 @@ app.post('/api/conversations/:id/unsubscribe', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// ===== GURUHGA A'ZO QO'SHISH (#4) =====
+app.post('/api/conversations/:id/add-member', async (req, res) => {
+  const { phone, targetPhone, targetUsername } = req.body;
+  try {
+    const conv = await Conversation.findById(req.params.id);
+    if (!conv) return res.status(404).json({ error: 'Guruh topilmadi' });
+    if (!conv.admins.includes(phone)) return res.status(403).json({ error: 'Faqat admin a\'zo qo\'sha oladi' });
+    let targetUser = null;
+    if (targetPhone) targetUser = await User.findOne({ phone: targetPhone });
+    else if (targetUsername) targetUser = await User.findOne({ username: targetUsername });
+    if (!targetUser) return res.status(404).json({ error: 'Foydalanuvchi topilmadi' });
+    if (conv.members.includes(targetUser.phone)) return res.status(400).json({ error: 'Bu foydalanuvchi allaqachon a\'zo' });
+    conv.members.push(targetUser.phone);
+    await conv.save();
+    res.json({ success: true, conversation: conv });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ===== GURUHDAN CHIQISH (#5) =====
+app.post('/api/conversations/:id/leave', async (req, res) => {
+  const { phone } = req.body;
+  try {
+    const conv = await Conversation.findById(req.params.id);
+    if (!conv) return res.status(404).json({ error: 'Guruh topilmadi' });
+    conv.members = conv.members.filter(m => m !== phone);
+    conv.admins = conv.admins.filter(a => a !== phone);
+    await conv.save();
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ===== XABARNI O'CHIRISH (#3) =====
+app.delete('/api/conversations/:id/messages/:msgId', async (req, res) => {
+  const { phone } = req.body;
+  try {
+    const conv = await Conversation.findById(req.params.id);
+    if (!conv) return res.status(404).json({ error: 'Suhbat topilmadi' });
+    const msg = conv.messages.id(req.params.msgId);
+    if (!msg) return res.status(404).json({ error: 'Xabar topilmadi' });
+    if (msg.sender !== phone) return res.status(403).json({ error: 'Faqat o\'z xabaringizni o\'chira olasiz' });
+    msg.deleted = true;
+    msg.text = '[xabar o\'chirildi]';
+    await conv.save();
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ===== OMMAVIY GURUH/KANAL KASHFIYOTI (#16) =====
+app.get('/api/discover', async (req, res) => {
+  const { type } = req.query;
+  try {
+    const items = await Conversation.find({ type: type, isPublic: true })
+      .select('-messages')
+      .sort({ lastMessageAt: -1 })
+      .limit(50);
+    res.json({ success: true, items });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // ===== ADMIN =====
 function adminAuth(req, res, next) {
   if (req.headers['x-admin-secret'] !== ADMIN_SECRET) return res.status(403).json({ error: 'Ruxsat yo\'q' });
@@ -325,7 +383,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('sendConvMessage', async (data) => {
-    const { convId, text, phone, senderNickname, imageData, audioData } = data;
+    const { convId, text, phone, senderNickname, imageData, audioData, replyTo } = data;
     try {
       const conv = await Conversation.findById(convId);
       if (!conv) return;
@@ -335,16 +393,38 @@ io.on('connection', (socket) => {
       let msgType = 'text';
       if (imageData) { msgText = `[image:${imageData}]`; lastMsg = '📷 Rasm'; msgType = 'image'; }
       else if (audioData) { msgText = `[audio:${audioData}]`; lastMsg = '🎤 Ovozli xabar'; msgType = 'audio'; }
-      const newMessage = { text: msgText, sender: phone, senderNickname: senderNickname || phone, sentAt: new Date().toISOString(), type: msgType };
+      const newMessage = {
+        text: msgText,
+        sender: phone,
+        senderNickname: senderNickname || phone,
+        sentAt: new Date().toISOString(),
+        type: msgType,
+        replyTo: replyTo || { msgId: null, text: '', sender: '' },
+        deleted: false
+      };
       conv.messages.push(newMessage);
       conv.lastMessage = lastMsg;
       conv.lastMessageAt = newMessage.sentAt;
       await conv.save();
-      io.to(`conv_${convId}`).emit('newConvMessage', { convId, message: newMessage });
+      const savedMsg = conv.messages[conv.messages.length - 1];
+      io.to(`conv_${convId}`).emit('newConvMessage', { convId, message: savedMsg });
     } catch (err) { console.log('sendConvMessage xato:', err.message); }
   });
 
-  // WebRTC signaling
+  socket.on('deleteConvMessage', async (data) => {
+    const { convId, msgId, phone } = data;
+    try {
+      const conv = await Conversation.findById(convId);
+      if (!conv) return;
+      const msg = conv.messages.id(msgId);
+      if (!msg || msg.sender !== phone) return;
+      msg.deleted = true;
+      msg.text = '[xabar o\'chirildi]';
+      await conv.save();
+      io.to(`conv_${convId}`).emit('convMessageDeleted', { convId, msgId });
+    } catch (err) { console.log('deleteConvMessage xato:', err.message); }
+  });
+
   socket.on('webrtc-offer', (data) => { socket.to(`conv_${data.convId}`).emit('webrtc-offer', { offer: data.offer, from: socket.id }); });
   socket.on('webrtc-answer', (data) => { socket.to(data.to).emit('webrtc-answer', { answer: data.answer, from: socket.id }); });
   socket.on('webrtc-ice', (data) => { socket.to(data.to || `conv_${data.convId}`).emit('webrtc-ice', { candidate: data.candidate, from: socket.id }); });

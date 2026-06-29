@@ -1,12 +1,19 @@
 import mongoose from "mongoose";
 
 const messageSchema = new mongoose.Schema({
+  _id: { type: mongoose.Schema.Types.ObjectId, default: () => new mongoose.Types.ObjectId() },
   text: { type: String, default: '' },
   sender: { type: String, required: true },
   senderNickname: { type: String, default: '' },
   senderAvatar: { type: String, default: null },
   sentAt: { type: String, default: () => new Date().toISOString() },
-  type: { type: String, default: 'text' }
+  type: { type: String, default: 'text' },
+  replyTo: {
+    msgId: { type: String, default: null },
+    text: { type: String, default: '' },
+    sender: { type: String, default: '' }
+  },
+  deleted: { type: Boolean, default: false }
 });
 
 const conversationSchema = new mongoose.Schema({
