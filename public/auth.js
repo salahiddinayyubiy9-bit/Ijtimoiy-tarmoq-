@@ -290,14 +290,11 @@ dailyClaimBtn.addEventListener('click', async () => {
   } catch { alert('Xatolik yuz berdi.'); }
 });
 
-// Admin panel — profilga 5 marta bossangiz ochiladi
+// Admin — profilga 5 marta bosish
 let profileClickCount = 0;
 document.getElementById('profileAvatar').addEventListener('click', () => {
   profileClickCount++;
-  if (profileClickCount >= 5) {
-    profileClickCount = 0;
-    openAdminPanel();
-  }
+  if (profileClickCount >= 5) { profileClickCount = 0; openAdminPanel(); }
 });
 
 // ===== PASTKI NAV =====
@@ -340,12 +337,16 @@ function renderConversations(convs, listEl, type) {
     const item = document.createElement('div');
     item.className = 'convItem';
     const icon = type === 'private' ? '👤' : type === 'group' ? '👥' : '📢';
-    const name = conv.name || conv.members?.find(m => m !== currentUser.phone) || 'Chat';
+    const otherPhone = conv.members?.find(m => m !== currentUser.phone);
+    const name = conv.name || otherPhone || 'Chat';
     const lastMsg = conv.lastMessage || '';
     const time = conv.lastMessageAt ? new Date(conv.lastMessageAt).toLocaleTimeString('uz', { hour: '2-digit', minute: '2-digit' }) : '';
     item.innerHTML = `
       <div class="convAvatar">${icon}</div>
-      <div class="convInfo"><div class="convName">${name}</div><div class="convLastMsg">${lastMsg}</div></div>
+      <div class="convInfo">
+        <div class="convName">${name}</div>
+        <div class="convLastMsg">${lastMsg}</div>
+      </div>
       <div class="convTime">${time}</div>
     `;
     item.addEventListener('click', () => openConvPage(conv));
@@ -357,7 +358,9 @@ function renderConversations(convs, listEl, type) {
 async function openConvPage(conv) {
   currentConvId = conv._id;
   currentConvType = conv.type;
-  convPageName.textContent = conv.name || conv.members?.find(m => m !== currentUser.phone) || 'Chat';
+
+  const otherPhone = conv.members?.find(m => m !== currentUser.phone);
+  convPageName.textContent = conv.name || otherPhone || 'Chat';
 
   if (conv.type === 'private') {
     convPageMeta.textContent = 'Shaxsiy chat';
@@ -381,11 +384,14 @@ async function openConvPage(conv) {
 
   lockScroll();
   convPage.classList.remove('hidden');
+  saveState('conv', { convId: conv._id, convType: conv.type });
+
   try {
     const res = await fetch(`/api/conversations/${conv._id}`);
     const data = await res.json();
     if (data.success) renderConvMessages(data.conversation.messages || []);
   } catch {}
+
   socket.emit('joinConversation', conv._id);
 }
 
@@ -418,6 +424,7 @@ convBackBtn.addEventListener('click', () => {
   convPage.classList.add('hidden');
   unlockScroll();
   closeAllConvPanels();
+  clearState();
   if (activeTab === 'chats') loadConversations('private');
   else if (activeTab === 'groups') loadConversations('group');
   else if (activeTab === 'channels') loadConversations('channel');
@@ -429,16 +436,24 @@ convMessageInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendC
 function sendConvMessage() {
   const text = convMessageInput.value.trim();
   if (!text || !currentConvId) return;
-  socket.emit('sendConvMessage', { convId: currentConvId, text: text, phone: currentUser.phone, senderNickname: currentUser.nickname || currentUser.phone });
+  socket.emit('sendConvMessage', {
+    convId: currentConvId, text: text,
+    phone: currentUser.phone,
+    senderNickname: currentUser.nickname || currentUser.phone
+  });
   convMessageInput.value = '';
 }
 
-// Conv rasm yuborish
 convImageInput.addEventListener('change', async () => {
   const file = convImageInput.files[0];
   if (!file) return;
   const imageData = await compressImage(file);
-  socket.emit('sendConvMessage', { convId: currentConvId, text: '', phone: currentUser.phone, senderNickname: currentUser.nickname || currentUser.phone, imageData: imageData });
+  socket.emit('sendConvMessage', {
+    convId: currentConvId, text: '',
+    phone: currentUser.phone,
+    senderNickname: currentUser.nickname || currentUser.phone,
+    imageData: imageData
+  });
   convImageInput.value = '';
 });
 
@@ -479,7 +494,13 @@ searchBtn.addEventListener('click', async () => {
       if (user.phone === currentUser.phone) return;
       const item = document.createElement('div');
       item.className = 'searchResultItem';
-      item.innerHTML = `<div class="convAvatar">👤</div><div><div class="searchResultName">${user.nickname || user.phone}</div><div class="searchResultPhone">${user.username ? '@' + user.username : user.phone}</div></div>`;
+      item.innerHTML = `
+        <div class="convAvatar">👤</div>
+        <div>
+          <div class="searchResultName">${user.nickname || user.phone}</div>
+          <div class="searchResultPhone">${user.username ? '@' + user.username : user.phone}</div>
+        </div>
+      `;
       item.addEventListener('click', async () => {
         searchModal.classList.add('hidden'); searchResults.innerHTML = ''; searchInput.value = '';
         try {
@@ -547,20 +568,16 @@ async function openAdminPanel() {
 async function loadAdminTab(tab) {
   adminContent.innerHTML = '<p class="emptyConvText">Yuklanmoqda...</p>';
   try {
-    let url = tab === 'users' ? '/api/admin/users' : tab === 'rooms' ? '/api/admin/rooms' : '/api/admin/conversations';
+    const url = tab === 'users' ? '/api/admin/users' : tab === 'rooms' ? '/api/admin/rooms' : '/api/admin/conversations';
     const res = await fetch(url, { headers: { 'x-admin-secret': ADMIN_SECRET } });
     const data = await res.json();
     if (!data.success) { adminContent.innerHTML = '<p class="emptyConvText">Xatolik yuz berdi.</p>'; return; }
-
     adminContent.innerHTML = '';
     const items = data.users || data.rooms || data.conversations;
-
     if (!items || items.length === 0) { adminContent.innerHTML = '<p class="emptyConvText">Bo\'sh.</p>'; return; }
-
     items.forEach(item => {
       const row = document.createElement('div');
       row.className = 'adminRow';
-
       if (tab === 'users') {
         row.innerHTML = `
           <div class="adminRowInfo">
@@ -583,8 +600,7 @@ async function loadAdminTab(tab) {
         });
         row.querySelector('.adminDelBtn').addEventListener('click', async (e) => {
           if (!confirm('Foydalanuvchini o\'chirmoqchimisiz?')) return;
-          const phone = e.target.dataset.phone;
-          await fetch(`/api/admin/users/${phone}`, { method: 'DELETE', headers: { 'x-admin-secret': ADMIN_SECRET } });
+          await fetch(`/api/admin/users/${e.target.dataset.phone}`, { method: 'DELETE', headers: { 'x-admin-secret': ADMIN_SECRET } });
           loadAdminTab('users');
         });
       } else if (tab === 'rooms') {
@@ -756,7 +772,6 @@ roomMessageInput.addEventListener('keydown', e => {
   }
 });
 
-// Room rasm yuborish
 roomImageInput.addEventListener('change', async () => {
   const file = roomImageInput.files[0];
   if (!file) return;
@@ -798,17 +813,14 @@ function closeAllRoomPanels() {
   roomMediaPanel.classList.add('hidden'); roomEmojiPanel.classList.add('hidden');
   roomStickerPanel.classList.add('hidden'); roomGifPanel.classList.add('hidden');
 }
-
 function toggleRoomPanel(panel) {
   const isHidden = panel.classList.contains('hidden');
   closeAllRoomPanels();
   if (isHidden) { roomMediaPanel.classList.remove('hidden'); panel.classList.remove('hidden'); }
 }
-
 roomEmojiBtn.addEventListener('click', () => toggleRoomPanel(roomEmojiPanel));
 roomStickerBtn.addEventListener('click', () => toggleRoomPanel(roomStickerPanel));
 roomGifBtn.addEventListener('click', () => toggleRoomPanel(roomGifPanel));
-
 document.querySelectorAll('#roomEmojiPanel .emojiItem').forEach(item => {
   item.addEventListener('click', () => { roomMessageInput.value += item.textContent; closeAllRoomPanels(); roomMessageInput.focus(); });
 });
@@ -823,17 +835,14 @@ function closeAllConvPanels() {
   convMediaPanel.classList.add('hidden'); convEmojiPanel.classList.add('hidden');
   convStickerPanel.classList.add('hidden'); convGifPanel.classList.add('hidden');
 }
-
 function toggleConvPanel(panel) {
   const isHidden = panel.classList.contains('hidden');
   closeAllConvPanels();
   if (isHidden) { convMediaPanel.classList.remove('hidden'); panel.classList.remove('hidden'); }
 }
-
 convEmojiBtn.addEventListener('click', () => toggleConvPanel(convEmojiPanel));
 convStickerBtn.addEventListener('click', () => toggleConvPanel(convStickerPanel));
 convGifBtn.addEventListener('click', () => toggleConvPanel(convGifPanel));
-
 document.querySelectorAll('#convEmojiPanel .emojiItem').forEach(item => {
   item.addEventListener('click', () => { convMessageInput.value += item.textContent; closeAllConvPanels(); convMessageInput.focus(); });
 });
@@ -869,6 +878,17 @@ async function restoreState() {
         const res = await fetch(`/api/rooms/single/${state.data.roomId}`);
         const data = await res.json();
         if (data.success) await openRoomPage(data.room);
+      } catch { clearState(); }
+    } else if (state.type === 'conv' && state.data.convId) {
+      try {
+        const res = await fetch(`/api/conversations/${state.data.convId}`);
+        const data = await res.json();
+        if (data.success) {
+          const type = data.conversation.type;
+          activeTab = type === 'private' ? 'chats' : type === 'group' ? 'groups' : 'channels';
+          switchTab(activeTab);
+          await openConvPage(data.conversation);
+        } else { clearState(); }
       } catch { clearState(); }
     }
   } catch { clearState(); }
