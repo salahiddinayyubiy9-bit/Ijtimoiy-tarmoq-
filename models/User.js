@@ -9,6 +9,7 @@ const userSchema = new mongoose.Schema({
   birthDate: { type: String, default: null },
   isOnline: { type: Boolean, default: false },
   lastSeen: { type: String, default: () => new Date().toISOString() },
+  blockedUsers: [{ type: String }],
   diamonds: { type: Number, default: 500 },
   rank: { type: String, default: 'Oddiy askar' },
   lastDailyClaim: { type: String, default: null },

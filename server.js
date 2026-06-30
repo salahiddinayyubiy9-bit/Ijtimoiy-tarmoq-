@@ -11,6 +11,7 @@ import { connectDB } from "./db.js";
 import User from "./models/User.js";
 import Room from "./models/Room.js";
 import Conversation from "./models/Conversation.js";
+import Report from "./models/Report.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -100,7 +101,6 @@ app.post('/api/profile/update-image', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ===== PROFIL TAHRIRLASH (#6, #7, #8) =====
 app.post('/api/profile/update', async (req, res) => {
   const { phone, nickname, bio, birthDate, username } = req.body;
   if (!phone) return res.status(400).json({ error: 'Telefon kiritilmadi' });
@@ -120,12 +120,56 @@ app.post('/api/profile/update', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ===== ONLINE HOLATI / SO'NGGI KO'RILGAN (#9, #10) =====
 app.get('/api/users/status/:phone', async (req, res) => {
   try {
     const user = await User.findOne({ phone: req.params.phone }).select('isOnline lastSeen');
     if (!user) return res.status(404).json({ error: 'Foydalanuvchi topilmadi' });
     res.json({ success: true, isOnline: user.isOnline, lastSeen: user.lastSeen });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ===== BLOKLASH =====
+app.post('/api/users/block', async (req, res) => {
+  const { phone, targetPhone } = req.body;
+  if (!phone || !targetPhone) return res.status(400).json({ error: 'Ma\'lumotlar yetarli emas' });
+  try {
+    const user = await User.findOneAndUpdate({ phone }, { $addToSet: { blockedUsers: targetPhone } }, { new: true });
+    if (!user) return res.status(404).json({ error: 'Foydalanuvchi topilmadi' });
+    res.json({ success: true, user });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/users/unblock', async (req, res) => {
+  const { phone, targetPhone } = req.body;
+  if (!phone || !targetPhone) return res.status(400).json({ error: 'Ma\'lumotlar yetarli emas' });
+  try {
+    const user = await User.findOneAndUpdate({ phone }, { $pull: { blockedUsers: targetPhone } }, { new: true });
+    if (!user) return res.status(404).json({ error: 'Foydalanuvchi topilmadi' });
+    res.json({ success: true, user });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.get('/api/users/blocked-status', async (req, res) => {
+  const { phone, targetPhone } = req.query;
+  try {
+    const user = await User.findOne({ phone });
+    const target = await User.findOne({ phone: targetPhone });
+    res.json({
+      success: true,
+      iBlockedThem: user?.blockedUsers?.includes(targetPhone) || false,
+      theyBlockedMe: target?.blockedUsers?.includes(phone) || false
+    });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ===== SHIKOYAT QILISH =====
+app.post('/api/reports/create', async (req, res) => {
+  const { reportedBy, reportedUser, reason, details } = req.body;
+  if (!reportedBy || !reportedUser || !reason) return res.status(400).json({ error: 'Ma\'lumotlar yetarli emas' });
+  try {
+    const report = new Report({ reportedBy, reportedUser, reason, details: details || '' });
+    await report.save();
+    res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -277,7 +321,6 @@ app.post('/api/conversations/:id/unsubscribe', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ===== GURUHGA A'ZO QO'SHISH =====
 app.post('/api/conversations/:id/add-member', async (req, res) => {
   const { phone, targetPhone, targetUsername } = req.body;
   try {
@@ -295,7 +338,6 @@ app.post('/api/conversations/:id/add-member', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ===== GURUHDAN CHIQISH =====
 app.post('/api/conversations/:id/leave', async (req, res) => {
   const { phone } = req.body;
   try {
@@ -308,7 +350,6 @@ app.post('/api/conversations/:id/leave', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ===== XABARNI O'CHIRISH =====
 app.delete('/api/conversations/:id/messages/:msgId', async (req, res) => {
   const { phone } = req.body;
   try {
@@ -324,14 +365,10 @@ app.delete('/api/conversations/:id/messages/:msgId', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ===== OMMAVIY GURUH/KANAL KASHFIYOTI =====
 app.get('/api/discover', async (req, res) => {
   const { type } = req.query;
   try {
-    const items = await Conversation.find({ type: type, isPublic: true })
-      .select('-messages')
-      .sort({ lastMessageAt: -1 })
-      .limit(50);
+    const items = await Conversation.find({ type: type, isPublic: true }).select('-messages').sort({ lastMessageAt: -1 }).limit(50);
     res.json({ success: true, items });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -355,6 +392,20 @@ app.get('/api/admin/rooms', adminAuth, async (req, res) => {
 app.get('/api/admin/conversations', adminAuth, async (req, res) => {
   try { res.json({ success: true, conversations: await Conversation.find().select('-messages -__v').sort({ createdAt: -1 }) }); }
   catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.get('/api/admin/reports', adminAuth, async (req, res) => {
+  try {
+    const reports = await Report.find().sort({ createdAt: -1 });
+    res.json({ success: true, reports });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/admin/reports/:id/resolve', adminAuth, async (req, res) => {
+  try {
+    await Report.findByIdAndUpdate(req.params.id, { status: 'resolved' });
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.post('/api/admin/users/:phone/diamonds', adminAuth, async (req, res) => {
@@ -417,6 +468,15 @@ io.on('connection', (socket) => {
       const conv = await Conversation.findById(convId);
       if (!conv) return;
       if (conv.type === 'channel' && conv.createdBy !== phone) return;
+      if (conv.type === 'private') {
+        const otherPhone = conv.members.find(m => m !== phone);
+        const sender = await User.findOne({ phone });
+        const other = await User.findOne({ phone: otherPhone });
+        if (sender?.blockedUsers?.includes(otherPhone) || other?.blockedUsers?.includes(phone)) {
+          socket.emit('messageBlocked');
+          return;
+        }
+      }
       let msgText = text;
       let lastMsg = text;
       let msgType = 'text';

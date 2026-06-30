@@ -1316,3 +1316,22 @@ body.no-scroll {
 
 .groupActionBtn:hover { background-color: #3a3e48; }
 .groupLeaveBtn { color: #f87171; }
+
+.convMoreBtn {
+  background-color: transparent;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: #e8e8e8;
+  padding: 4px 8px;
+}
+
+.blockedBanner {
+  background-color: #2a1515;
+  color: #f87171;
+  text-align: center;
+  padding: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}

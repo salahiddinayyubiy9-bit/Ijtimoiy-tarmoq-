@@ -2,7 +2,6 @@ const socket = io();
 const STATE_KEY = 'appState';
 const ADMIN_SECRET = 'admin_secret_2026';
 
-// AUTH
 const authSection = document.getElementById('authSection');
 const step1 = document.getElementById('step1');
 const step2 = document.getElementById('step2');
@@ -27,7 +26,6 @@ const codeDigits = [
   document.getElementById('code3'), document.getElementById('code4')
 ];
 
-// MAIN
 const mainSection = document.getElementById('mainSection');
 const homeTab = document.getElementById('homeTab');
 const chatsTab = document.getElementById('chatsTab');
@@ -50,7 +48,6 @@ const navChats = document.getElementById('navChats');
 const navGroups = document.getElementById('navGroups');
 const navChannels = document.getElementById('navChannels');
 
-// KATEGORIYA
 const categoryPage = document.getElementById('categoryPage');
 const categoryBackBtn = document.getElementById('categoryBackBtn');
 const categoryPageTitle = document.getElementById('categoryPageTitle');
@@ -60,7 +57,6 @@ const categoryCreateRoomForm = document.getElementById('categoryCreateRoomForm')
 const categoryRoomNameInput = document.getElementById('categoryRoomNameInput');
 const categoryRoomList = document.getElementById('categoryRoomList');
 
-// XONA
 const roomPage = document.getElementById('roomPage');
 const roomBackBtn = document.getElementById('roomBackBtn');
 const roomPageName = document.getElementById('roomPageName');
@@ -82,7 +78,6 @@ const roomEmojiBtn = document.getElementById('roomEmojiBtn');
 const roomStickerBtn = document.getElementById('roomStickerBtn');
 const roomGifBtn = document.getElementById('roomGifBtn');
 
-// SUHBAT
 const convPage = document.getElementById('convPage');
 const convBackBtn = document.getElementById('convBackBtn');
 const convPageName = document.getElementById('convPageName');
@@ -121,7 +116,6 @@ const msgMenuForward = document.getElementById('msgMenuForward');
 const msgMenuDelete = document.getElementById('msgMenuDelete');
 const msgMenuClose = document.getElementById('msgMenuClose');
 
-// MODALLAR
 const searchModal = document.getElementById('searchModal');
 const closeSearchModal = document.getElementById('closeSearchModal');
 const searchInput = document.getElementById('searchInput');
@@ -164,6 +158,17 @@ const editProfileMsg = document.getElementById('editProfileMsg');
 const adminModal = document.getElementById('adminModal');
 const closeAdminModal = document.getElementById('closeAdminModal');
 const adminContent = document.getElementById('adminContent');
+const convMoreBtn = document.getElementById('convMoreBtn');
+const convMoreMenu = document.getElementById('convMoreMenu');
+const convMoreClose = document.getElementById('convMoreClose');
+const blockUserBtn = document.getElementById('blockUserBtn');
+const reportUserBtn = document.getElementById('reportUserBtn');
+const reportModal = document.getElementById('reportModal');
+const closeReportModal = document.getElementById('closeReportModal');
+const reportDetailsInput = document.getElementById('reportDetailsInput');
+const submitReportBtn = document.getElementById('submitReportBtn');
+const reportMsg = document.getElementById('reportMsg');
+const blockedBanner = document.getElementById('blockedBanner');
 
 let currentPhone = '';
 let selectedCountryCode = '+998';
@@ -177,6 +182,8 @@ let activeTab = 'home';
 let replyToMsg = null;
 let selectedMsgEl = null;
 let selectedMsgData = null;
+let currentOtherPhone = null;
+let isBlockedByMe = false;
 
 let mediaRecorder = null;
 let audioChunks = [];
@@ -226,7 +233,6 @@ function formatLastSeen(lastSeen) {
   return `${days} kun oldin`;
 }
 
-// ===== DAVLAT KODI =====
 countrySelector.addEventListener('click', (e) => { e.stopPropagation(); countryDropdown.classList.toggle('hidden'); });
 document.addEventListener('click', () => countryDropdown.classList.add('hidden'));
 document.querySelectorAll('.countryOption').forEach(opt => {
@@ -238,7 +244,6 @@ document.querySelectorAll('.countryOption').forEach(opt => {
   });
 });
 
-// ===== KOD =====
 codeDigits.forEach((input, i) => {
   input.addEventListener('input', () => { input.value = input.value.replace(/\D/g, ''); if (input.value && i < 3) codeDigits[i + 1].focus(); });
   input.addEventListener('keydown', (e) => { if (e.key === 'Backspace' && !input.value && i > 0) codeDigits[i - 1].focus(); });
@@ -246,7 +251,6 @@ codeDigits.forEach((input, i) => {
 function getCode() { return codeDigits.map(d => d.value).join(''); }
 function clearCode() { codeDigits.forEach(d => d.value = ''); codeDigits[0].focus(); }
 
-// ===== AUTH =====
 sendCodeBtn.addEventListener('click', async () => {
   const number = phoneInput.value.trim();
   if (!number) return showError(authMessage, 'Telefon raqam kiriting');
@@ -289,7 +293,6 @@ setupProfileBtn.addEventListener('click', async () => {
   } catch { showError(profileMessage, 'Xatolik yuz berdi.'); }
 });
 
-// ===== ASOSIY =====
 function showMainSection(user) {
   currentUser = user;
   authSection.classList.add('hidden');
@@ -309,7 +312,6 @@ if (savedUser) showMainSection(JSON.parse(savedUser));
 
 socket.on('connect', () => { if (currentUser) socket.emit('setOnline', currentUser.phone); });
 
-// ===== PROFIL RASMI =====
 profileImageInput.addEventListener('change', async () => {
   const file = profileImageInput.files[0];
   if (!file || !currentUser) return;
@@ -322,7 +324,6 @@ profileImageInput.addEventListener('change', async () => {
   profileImageInput.value = '';
 });
 
-// ===== PROFIL TAHRIRLASH =====
 editProfileBtn.addEventListener('click', () => {
   editNicknameInput.value = currentUser.nickname || '';
   editUsernameInput.value = currentUser.username ? '@' + currentUser.username : '';
@@ -378,7 +379,6 @@ dailyClaimBtn.addEventListener('click', async () => {
 let profileClickCount = 0;
 profileAvatar.addEventListener('click', () => { profileClickCount++; if (profileClickCount >= 5) { profileClickCount = 0; openAdminPanel(); } });
 
-// ===== NAV =====
 function switchTab(tabName) {
   [homeTab, chatsTab, groupsTab, channelsTab].forEach(t => t.classList.add('hidden'));
   [navHome, navChats, navGroups, navChannels].forEach(b => b.classList.remove('active'));
@@ -393,7 +393,6 @@ navChats.addEventListener('click', () => switchTab('chats'));
 navGroups.addEventListener('click', () => switchTab('groups'));
 navChannels.addEventListener('click', () => switchTab('channels'));
 
-// ===== SUHBATLAR =====
 async function loadConversations(type) {
   const listEl = type === 'private' ? chatsList : type === 'group' ? groupsList : channelsList;
   listEl.innerHTML = '<p class="emptyConvText">Yuklanmoqda...</p>';
@@ -429,7 +428,6 @@ function renderConversations(convs, listEl, type) {
   });
 }
 
-// ===== SUHBAT SAHIFASI =====
 async function openConvPage(conv) {
   currentConvId = conv._id;
   currentConvType = conv.type;
@@ -445,6 +443,8 @@ async function openConvPage(conv) {
 
   if (conv.type === 'private') {
     convPageMeta.textContent = 'Shaxsiy chat';
+    currentOtherPhone = otherPhone;
+    convMoreBtn.classList.remove('hidden');
     if (otherPhone) {
       fetch(`/api/users/status/${otherPhone}`).then(r => r.json()).then(d => {
         if (d.success) {
@@ -453,12 +453,21 @@ async function openConvPage(conv) {
             : `<span class="offlineDot"></span>${formatLastSeen(d.lastSeen)}`;
         }
       }).catch(() => {});
+      fetch(`/api/users/blocked-status?phone=${currentUser.phone}&targetPhone=${otherPhone}`).then(r => r.json()).then(d => {
+        if (d.success) {
+          isBlockedByMe = d.iBlockedThem;
+          blockUserBtn.textContent = isBlockedByMe ? '✅ Blokdan chiqarish' : '🚫 Bloklash';
+          updateBlockedBanner();
+        }
+      }).catch(() => {});
     }
     convInputArea.classList.remove('hidden');
     channelSubscribeArea.classList.add('hidden');
     convDeleteBtn.classList.add('hidden');
     voiceChatBtn.classList.remove('hidden');
   } else if (conv.type === 'group') {
+    convMoreBtn.classList.add('hidden');
+    blockedBanner.classList.add('hidden');
     convPageMeta.textContent = `${conv.members?.length || 0} a'zo`;
     convInputArea.classList.remove('hidden');
     channelSubscribeArea.classList.add('hidden');
@@ -489,6 +498,8 @@ async function openConvPage(conv) {
       } catch {}
     });
   } else if (conv.type === 'channel') {
+    convMoreBtn.classList.add('hidden');
+    blockedBanner.classList.add('hidden');
     convPageMeta.textContent = `${conv.subscribers?.length || 0} obunachi`;
     convInputArea.classList[conv.createdBy === currentUser.phone ? 'remove' : 'add']('hidden');
     channelSubscribeArea.classList[conv.createdBy === currentUser.phone ? 'add' : 'remove']('hidden');
@@ -604,7 +615,6 @@ socket.on('convMessageDeleted', (data) => {
   if (el) { el.className = 'msgDeleted'; el.innerHTML = '🗑️ Xabar o\'chirildi'; }
 });
 
-// ===== XABAR QIDIRUV =====
 searchMsgBtn.addEventListener('click', () => {
   msgSearchBar.classList.toggle('hidden');
   if (!msgSearchBar.classList.contains('hidden')) msgSearchInput.focus();
@@ -627,7 +637,6 @@ msgSearchInput.addEventListener('input', () => {
 
 function clearMsgHighlights() { convPageMessages.querySelectorAll('.msgHighlight').forEach(el => el.classList.remove('msgHighlight')); }
 
-// ===== FORWARD =====
 async function openForwardModal(msgText) {
   forwardModal.classList.remove('hidden');
   forwardList.innerHTML = '<p class="emptyConvText">Yuklanmoqda...</p>';
@@ -660,7 +669,6 @@ async function openForwardModal(msgText) {
 
 closeForwardModal.addEventListener('click', () => forwardModal.classList.add('hidden'));
 
-// ===== GURUHGA A'ZO QO'SHISH =====
 closeAddMemberModal.addEventListener('click', () => { addMemberModal.classList.add('hidden'); addMemberInput.value = ''; });
 
 addMemberBtn.addEventListener('click', async () => {
@@ -680,7 +688,6 @@ addMemberBtn.addEventListener('click', async () => {
   } catch { showError(addMemberMsg, 'Xatolik yuz berdi.'); }
 });
 
-// ===== KASHFIYOT =====
 discoverGroupsBtn.addEventListener('click', () => openDiscoverModal('group'));
 discoverChannelsBtn.addEventListener('click', () => openDiscoverModal('channel'));
 closeDiscoverModal.addEventListener('click', () => discoverModal.classList.add('hidden'));
@@ -723,9 +730,80 @@ async function openDiscoverModal(type) {
   } catch { discoverList.innerHTML = '<p class="emptyConvText">Xatolik.</p>'; }
 }
 
-// ===== CONV TUGMALARI =====
+convMoreBtn.addEventListener('click', () => convMoreMenu.classList.toggle('hidden'));
+convMoreClose.addEventListener('click', () => convMoreMenu.classList.add('hidden'));
+
+blockUserBtn.addEventListener('click', async () => {
+  if (!currentOtherPhone) return;
+  convMoreMenu.classList.add('hidden');
+  const action = isBlockedByMe ? 'unblock' : 'block';
+  if (!confirm(isBlockedByMe ? 'Blokdan chiqarmoqchimisiz?' : 'Foydalanuvchini bloklamoqchimisiz?')) return;
+  try {
+    const res = await fetch(`/api/users/${action}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: currentUser.phone, targetPhone: currentOtherPhone })
+    });
+    const data = await res.json();
+    if (data.success) {
+      currentUser = data.user;
+      localStorage.setItem('user', JSON.stringify(data.user));
+      isBlockedByMe = !isBlockedByMe;
+      blockUserBtn.textContent = isBlockedByMe ? '✅ Blokdan chiqarish' : '🚫 Bloklash';
+      updateBlockedBanner();
+      alert(isBlockedByMe ? 'Foydalanuvchi bloklandi' : 'Blokdan chiqarildi');
+    }
+  } catch { alert('Xatolik yuz berdi.'); }
+});
+
+reportUserBtn.addEventListener('click', () => {
+  convMoreMenu.classList.add('hidden');
+  reportDetailsInput.value = '';
+  hideError(reportMsg);
+  document.querySelectorAll('input[name="reportReason"]').forEach(r => r.checked = false);
+  reportModal.classList.remove('hidden');
+});
+
+closeReportModal.addEventListener('click', () => reportModal.classList.add('hidden'));
+
+submitReportBtn.addEventListener('click', async () => {
+  const reasonEl = document.querySelector('input[name="reportReason"]:checked');
+  if (!reasonEl) return showError(reportMsg, 'Sababni tanlang');
+  hideError(reportMsg);
+  try {
+    const res = await fetch('/api/reports/create', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        reportedBy: currentUser.phone,
+        reportedUser: currentOtherPhone,
+        reason: reasonEl.value,
+        details: reportDetailsInput.value.trim()
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      reportModal.classList.add('hidden');
+      alert('Shikoyatingiz qabul qilindi. Rahmat!');
+    }
+  } catch { showError(reportMsg, 'Xatolik yuz berdi.'); }
+});
+
+function updateBlockedBanner() {
+  if (isBlockedByMe) {
+    blockedBanner.classList.remove('hidden');
+    convInputArea.classList.add('hidden');
+  } else {
+    blockedBanner.classList.add('hidden');
+    if (currentConvType === 'private') convInputArea.classList.remove('hidden');
+  }
+}
+
+socket.on('messageBlocked', () => { alert('Xabar yuborilmadi — siz yoki suhbatdoshingiz bloklangan.'); });
+
 convBackBtn.addEventListener('click', () => {
   if (isInVoiceChat) endVoiceChat();
+  convMoreBtn.classList.add('hidden');
+  convMoreMenu.classList.add('hidden');
+  blockedBanner.classList.add('hidden');
   convPage.classList.add('hidden');
   unlockScroll();
   closeAllConvPanels();
@@ -772,7 +850,6 @@ channelSubBtn.addEventListener('click', async () => {
 
 socket.on('newConvMessage', (data) => { if (currentConvId && data.convId === currentConvId) appendConvMessage(data.message); });
 
-// ===== OVOZLI XABAR =====
 async function startVoiceRecording(isRoom) {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -812,7 +889,6 @@ convVoiceBtn.addEventListener('mouseup', () => stopVoiceRecording(false));
 convVoiceBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startVoiceRecording(false); });
 convVoiceBtn.addEventListener('touchend', (e) => { e.preventDefault(); stopVoiceRecording(false); });
 
-// ===== WEBRTC =====
 voiceChatBtn.addEventListener('click', async () => {
   if (isInVoiceChat) { endVoiceChat(); return; }
   try {
@@ -878,7 +954,6 @@ socket.on('webrtc-answer', async (data) => { try { await peerConnection.setRemot
 socket.on('webrtc-ice', async (data) => { try { if (peerConnection) await peerConnection.addIceCandidate(data.candidate); } catch {} });
 socket.on('webrtc-end', () => endVoiceChat());
 
-// ===== ONLINE/OFFLINE EVENTLAR =====
 socket.on('userOnline', (data) => {
   if (currentConvType === 'private' && currentConvData?.members?.includes(data.phone)) {
     convPageMeta.innerHTML = '<span class="onlineDot"></span>online';
@@ -891,7 +966,6 @@ socket.on('userOffline', (data) => {
   }
 });
 
-// ===== MODALLAR =====
 newChatBtn.addEventListener('click', () => searchModal.classList.remove('hidden'));
 closeSearchModal.addEventListener('click', () => { searchModal.classList.add('hidden'); searchResults.innerHTML = ''; searchInput.value = ''; });
 
@@ -948,7 +1022,6 @@ createChannelBtn.addEventListener('click', async () => {
   } catch {}
 });
 
-// ===== ADMIN =====
 closeAdminModal.addEventListener('click', () => adminModal.classList.add('hidden'));
 document.querySelectorAll('.adminTabBtn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -963,12 +1036,12 @@ async function openAdminPanel() { adminModal.classList.remove('hidden'); loadAdm
 async function loadAdminTab(tab) {
   adminContent.innerHTML = '<p class="emptyConvText">Yuklanmoqda...</p>';
   try {
-    const url = tab === 'users' ? '/api/admin/users' : tab === 'rooms' ? '/api/admin/rooms' : '/api/admin/conversations';
+    const url = tab === 'users' ? '/api/admin/users' : tab === 'rooms' ? '/api/admin/rooms' : tab === 'convs' ? '/api/admin/conversations' : '/api/admin/reports';
     const res = await fetch(url, { headers: { 'x-admin-secret': ADMIN_SECRET } });
     const data = await res.json();
     if (!data.success) { adminContent.innerHTML = '<p class="emptyConvText">Xatolik.</p>'; return; }
     adminContent.innerHTML = '';
-    const items = data.users || data.rooms || data.conversations;
+    const items = data.users || data.rooms || data.conversations || data.reports;
     if (!items || items.length === 0) { adminContent.innerHTML = '<p class="emptyConvText">Bo\'sh.</p>'; return; }
     items.forEach(item => {
       const row = document.createElement('div');
@@ -992,20 +1065,28 @@ async function loadAdminTab(tab) {
           await fetch(`/api/admin/rooms/${e.target.dataset.id}`, { method: 'DELETE', headers: { 'x-admin-secret': ADMIN_SECRET } });
           loadAdminTab('rooms');
         });
-      } else {
+      } else if (tab === 'convs') {
         row.innerHTML = `<div class="adminRowInfo"><div class="adminRowName">${item.name || item.type} (${item.type})</div><div class="adminRowSub">${item.createdBy} | ${item.members?.length || 0} a'zo</div></div><button class="adminBtn adminDelBtn" data-id="${item._id}">🗑️</button>`;
         row.querySelector('.adminDelBtn').addEventListener('click', async (e) => {
           if (!confirm('O\'chirishni tasdiqlaysizmi?')) return;
           await fetch(`/api/admin/conversations/${e.target.dataset.id}`, { method: 'DELETE', headers: { 'x-admin-secret': ADMIN_SECRET } });
           loadAdminTab('convs');
         });
+      } else {
+        row.innerHTML = `<div class="adminRowInfo"><div class="adminRowName">${item.reason} ${item.status === 'resolved' ? '✅' : '🟡'}</div><div class="adminRowSub">${item.reportedBy} → ${item.reportedUser}${item.details ? ' | ' + item.details : ''}</div></div>${item.status !== 'resolved' ? `<button class="adminBtn adminGiveBtn" data-id="${item._id}">✅ Hal qilindi</button>` : ''}`;
+        const resolveBtn = row.querySelector('.adminGiveBtn');
+        if (resolveBtn) {
+          resolveBtn.addEventListener('click', async (e) => {
+            await fetch(`/api/admin/reports/${e.target.dataset.id}/resolve`, { method: 'POST', headers: { 'x-admin-secret': ADMIN_SECRET } });
+            loadAdminTab('reports');
+          });
+        }
       }
       adminContent.appendChild(row);
     });
   } catch { adminContent.innerHTML = '<p class="emptyConvText">Xatolik.</p>'; }
 }
 
-// ===== KATEGORIYA =====
 const categoryNames = {
   tanishuv: 'Tanishuv-chat', talabalar: 'Talabalar',
   oqituvchilar: 'O\'qituvchilar', taqdimotlar: 'Taqdimotlar',
@@ -1068,7 +1149,6 @@ categoryCreateRoomForm.addEventListener('submit', async e => {
   } catch {}
 });
 
-// ===== XONA =====
 async function openRoomPage(room) {
   currentRoomId = room._id;
   roomPageName.textContent = room.name;
@@ -1149,7 +1229,6 @@ document.querySelectorAll('.categoryCard').forEach(card => {
   });
 });
 
-// ===== PANELLAR =====
 function closeAllRoomPanels() {
   roomMediaPanel.classList.add('hidden'); roomEmojiPanel.classList.add('hidden');
   roomStickerPanel.classList.add('hidden'); roomGifPanel.classList.add('hidden');
@@ -1174,7 +1253,6 @@ document.querySelectorAll('#convEmojiPanel .emojiItem').forEach(item => { item.a
 document.querySelectorAll('#convStickerPanel .stickerItem').forEach(item => { item.addEventListener('click', () => { socket.emit('sendConvMessage', { convId: currentConvId, text: `[sticker:${item.dataset.sticker}]`, phone: currentUser.phone, senderNickname: currentUser.nickname || currentUser.phone }); closeAllConvPanels(); }); });
 document.querySelectorAll('#convGifPanel .gifItem').forEach(item => { item.addEventListener('click', () => { socket.emit('sendConvMessage', { convId: currentConvId, text: `[gif:${item.src}]`, phone: currentUser.phone, senderNickname: currentUser.nickname || currentUser.phone }); closeAllConvPanels(); }); });
 
-// ===== HOLATNI TIKLASH =====
 async function restoreState() {
   if (!currentUser) return;
   const savedState = localStorage.getItem(STATE_KEY);
