@@ -100,13 +100,42 @@ app.post('/api/profile/update-image', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// ===== PROFIL TAHRIRLASH (#6, #7, #8) =====
+app.post('/api/profile/update', async (req, res) => {
+  const { phone, nickname, bio, birthDate, username } = req.body;
+  if (!phone) return res.status(400).json({ error: 'Telefon kiritilmadi' });
+  try {
+    if (username) {
+      const existing = await User.findOne({ username });
+      if (existing && existing.phone !== phone) return res.status(400).json({ error: 'Bu username allaqachon band' });
+    }
+    const update = {};
+    if (nickname !== undefined) update.nickname = nickname;
+    if (bio !== undefined) update.bio = bio;
+    if (birthDate !== undefined) update.birthDate = birthDate;
+    if (username !== undefined) update.username = username || null;
+    const user = await User.findOneAndUpdate({ phone }, update, { new: true });
+    if (!user) return res.status(404).json({ error: 'Foydalanuvchi topilmadi' });
+    res.json({ success: true, user });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ===== ONLINE HOLATI / SO'NGGI KO'RILGAN (#9, #10) =====
+app.get('/api/users/status/:phone', async (req, res) => {
+  try {
+    const user = await User.findOne({ phone: req.params.phone }).select('isOnline lastSeen');
+    if (!user) return res.status(404).json({ error: 'Foydalanuvchi topilmadi' });
+    res.json({ success: true, isOnline: user.isOnline, lastSeen: user.lastSeen });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 app.get('/api/users/search', async (req, res) => {
   const { q } = req.query;
   if (!q) return res.status(400).json({ error: 'Qidiruv matni kiritilmadi' });
   try {
     const users = await User.find({
       $or: [{ phone: q }, { username: q.startsWith('@') ? q.slice(1) : q }]
-    }).select('phone nickname username profileImage rank');
+    }).select('phone nickname username profileImage rank bio isOnline lastSeen');
     res.json({ success: true, users });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -248,7 +277,7 @@ app.post('/api/conversations/:id/unsubscribe', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ===== GURUHGA A'ZO QO'SHISH (#4) =====
+// ===== GURUHGA A'ZO QO'SHISH =====
 app.post('/api/conversations/:id/add-member', async (req, res) => {
   const { phone, targetPhone, targetUsername } = req.body;
   try {
@@ -266,7 +295,7 @@ app.post('/api/conversations/:id/add-member', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ===== GURUHDAN CHIQISH (#5) =====
+// ===== GURUHDAN CHIQISH =====
 app.post('/api/conversations/:id/leave', async (req, res) => {
   const { phone } = req.body;
   try {
@@ -279,7 +308,7 @@ app.post('/api/conversations/:id/leave', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ===== XABARNI O'CHIRISH (#3) =====
+// ===== XABARNI O'CHIRISH =====
 app.delete('/api/conversations/:id/messages/:msgId', async (req, res) => {
   const { phone } = req.body;
   try {
@@ -295,7 +324,7 @@ app.delete('/api/conversations/:id/messages/:msgId', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ===== OMMAVIY GURUH/KANAL KASHFIYOTI (#16) =====
+// ===== OMMAVIY GURUH/KANAL KASHFIYOTI =====
 app.get('/api/discover', async (req, res) => {
   const { type } = req.query;
   try {
@@ -430,7 +459,24 @@ io.on('connection', (socket) => {
   socket.on('webrtc-ice', (data) => { socket.to(data.to || `conv_${data.convId}`).emit('webrtc-ice', { candidate: data.candidate, from: socket.id }); });
   socket.on('webrtc-end', (data) => { socket.to(`conv_${data.convId}`).emit('webrtc-end'); });
 
-  socket.on('disconnect', () => console.log('Uzildi:', socket.id));
+  socket.on('setOnline', async (phone) => {
+    socket.userPhone = phone;
+    try {
+      await User.findOneAndUpdate({ phone }, { isOnline: true });
+      socket.broadcast.emit('userOnline', { phone });
+    } catch (err) { console.log('setOnline xato:', err.message); }
+  });
+
+  socket.on('disconnect', async () => {
+    console.log('Uzildi:', socket.id);
+    if (socket.userPhone) {
+      try {
+        const lastSeen = new Date().toISOString();
+        await User.findOneAndUpdate({ phone: socket.userPhone }, { isOnline: false, lastSeen });
+        socket.broadcast.emit('userOffline', { phone: socket.userPhone, lastSeen });
+      } catch (err) { console.log('disconnect xato:', err.message); }
+    }
+  });
 });
 
 const startServer = async () => {

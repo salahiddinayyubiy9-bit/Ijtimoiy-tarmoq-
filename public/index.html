@@ -74,6 +74,7 @@
         </div>
         <div class="profileInfo">
           <p class="profileNickname" id="profileNickname"></p>
+          <p class="profileBio" id="profileBio"></p>
           <p class="profilePhone" id="profilePhone"></p>
         </div>
         <div class="profileStats">
@@ -81,6 +82,7 @@
           <div class="statBadge rankBadge"><span class="statIcon">🏅</span><span id="profileRank"></span></div>
         </div>
         <div class="profileBtns">
+          <button id="editProfileBtn">✏️ Tahrirlash</button>
           <button id="dailyClaimBtn">🎁 Kunlik olmos</button>
           <button id="logoutBtn" class="logoutBtn">Chiqish</button>
         </div>
@@ -226,12 +228,10 @@
       <span id="voiceChatStatus">📞 Ovozli chat...</span>
       <button id="endVoiceChatBtn" class="endVoiceChatBtn">📵 Tugatish</button>
     </div>
-    <!-- Xabar qidiruv paneli (#15) -->
     <div id="msgSearchBar" class="hidden msgSearchBar">
       <input type="text" id="msgSearchInput" placeholder="Xabarlarda qidirish..." class="msgSearchInput">
       <button id="msgSearchClose" class="msgSearchClose">✕</button>
     </div>
-    <!-- Reply panel -->
     <div id="replyPanel" class="hidden replyPanel">
       <div class="replyContent">
         <span class="replyLabel">↩️ Javob:</span>
@@ -292,7 +292,7 @@
     <div id="convVoiceIndicator" class="hidden voiceIndicator">🔴 Yozilmoqda...</div>
   </div>
 
-  <!-- XABAR MENYUSI (uzoq bosish) -->
+  <!-- XABAR MENYUSI -->
   <div id="msgMenu" class="hidden msgMenu">
     <button class="msgMenuBtn" id="msgMenuReply">↩️ Javob berish</button>
     <button class="msgMenuBtn" id="msgMenuForward">➡️ Yuborish</button>
@@ -334,7 +334,6 @@
     </div>
   </div>
 
-  <!-- A'ZO QO'SHISH MODALI (#4) -->
   <div id="addMemberModal" class="hidden modalOverlay">
     <div class="modalCard">
       <div class="modalHeader"><h3>A'zo qo'shish</h3><button class="modalCloseBtn" id="closeAddMemberModal">✕</button></div>
@@ -344,7 +343,6 @@
     </div>
   </div>
 
-  <!-- KASHFIYOT MODALI (#16) -->
   <div id="discoverModal" class="hidden modalOverlay">
     <div class="modalCard adminCard">
       <div class="modalHeader">
@@ -355,11 +353,22 @@
     </div>
   </div>
 
-  <!-- FORWARD MODALI (#17) -->
   <div id="forwardModal" class="hidden modalOverlay">
     <div class="modalCard adminCard">
       <div class="modalHeader"><h3>Xabarni yuborish</h3><button class="modalCloseBtn" id="closeForwardModal">✕</button></div>
       <div id="forwardList" class="discoverList"></div>
+    </div>
+  </div>
+
+  <div id="editProfileModal" class="hidden modalOverlay">
+    <div class="modalCard">
+      <div class="modalHeader"><h3>Profilni tahrirlash</h3><button class="modalCloseBtn" id="closeEditProfileModal">✕</button></div>
+      <input type="text" class="modalInput" id="editNicknameInput" placeholder="Ism" maxlength="30">
+      <input type="text" class="modalInput" id="editUsernameInput" placeholder="@username" maxlength="20">
+      <textarea class="modalInput" id="editBioInput" placeholder="Bio (qisqacha ma'lumot)" maxlength="150" rows="3" style="resize:none;font-family:inherit;"></textarea>
+      <input type="date" class="modalInput" id="editBirthDateInput">
+      <button class="authBtn" id="saveProfileBtn">Saqlash</button>
+      <p id="editProfileMsg" class="authError hidden"></p>
     </div>
   </div>
 
