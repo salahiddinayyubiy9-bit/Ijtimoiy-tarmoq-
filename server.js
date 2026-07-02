@@ -48,7 +48,6 @@ function isValidPhone(phone) { return ALLOWED_COUNTRY_CODES.some(code => phone.s
 
 app.get('/ping', (req, res) => res.json({ status: 'ok' }));
 
-// ===== AUTH =====
 app.post('/api/send-code', async (req, res) => {
   const { phone } = req.body;
   if (!phone) return res.status(400).json({ error: 'Telefon raqami kiritilmadi' });
@@ -128,7 +127,6 @@ app.get('/api/users/status/:phone', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ===== BLOKLASH =====
 app.post('/api/users/block', async (req, res) => {
   const { phone, targetPhone } = req.body;
   if (!phone || !targetPhone) return res.status(400).json({ error: 'Ma\'lumotlar yetarli emas' });
@@ -162,7 +160,6 @@ app.get('/api/users/blocked-status', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ===== SHIKOYAT QILISH =====
 app.post('/api/reports/create', async (req, res) => {
   const { reportedBy, reportedUser, reason, details } = req.body;
   if (!reportedBy || !reportedUser || !reason) return res.status(400).json({ error: 'Ma\'lumotlar yetarli emas' });
@@ -217,7 +214,6 @@ app.post('/api/category-enter', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ===== ROOMS =====
 app.post('/api/rooms/create', async (req, res) => {
   const { name, category, phone } = req.body;
   if (!name || !category || !phone) return res.status(400).json({ error: 'Ma\'lumotlar yetarli emas' });
@@ -254,7 +250,6 @@ app.delete('/api/rooms/:roomId', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ===== CONVERSATIONS =====
 app.post('/api/conversations/create', async (req, res) => {
   const { type, name, phone, isPublic, targetPhone, targetUsername } = req.body;
   if (!phone || !type) return res.status(400).json({ error: 'Ma\'lumotlar yetarli emas' });
@@ -368,12 +363,11 @@ app.delete('/api/conversations/:id/messages/:msgId', async (req, res) => {
 app.get('/api/discover', async (req, res) => {
   const { type } = req.query;
   try {
-    const items = await Conversation.find({ type: type, isPublic: true }).select('-messages').sort({ lastMessageAt: -1 }).limit(50);
+    const items = await Conversation.find({ type, isPublic: true }).select('-messages').sort({ lastMessageAt: -1 }).limit(50);
     res.json({ success: true, items });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ===== ADMIN =====
 function adminAuth(req, res, next) {
   if (req.headers['x-admin-secret'] !== ADMIN_SECRET) return res.status(403).json({ error: 'Ruxsat yo\'q' });
   next();
@@ -395,17 +389,13 @@ app.get('/api/admin/conversations', adminAuth, async (req, res) => {
 });
 
 app.get('/api/admin/reports', adminAuth, async (req, res) => {
-  try {
-    const reports = await Report.find().sort({ createdAt: -1 });
-    res.json({ success: true, reports });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  try { res.json({ success: true, reports: await Report.find().sort({ createdAt: -1 }) }); }
+  catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.post('/api/admin/reports/:id/resolve', adminAuth, async (req, res) => {
-  try {
-    await Report.findByIdAndUpdate(req.params.id, { status: 'resolved' });
-    res.json({ success: true });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  try { await Report.findByIdAndUpdate(req.params.id, { status: 'resolved' }); res.json({ success: true }); }
+  catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.post('/api/admin/users/:phone/diamonds', adminAuth, async (req, res) => {
@@ -431,7 +421,6 @@ app.delete('/api/admin/conversations/:id', adminAuth, async (req, res) => {
   catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ===== SOCKET.IO =====
 const httpServer = createServer(app);
 const io = new Server(httpServer, { maxHttpBufferSize: 15 * 1024 * 1024 });
 
@@ -483,13 +472,10 @@ io.on('connection', (socket) => {
       if (imageData) { msgText = `[image:${imageData}]`; lastMsg = '📷 Rasm'; msgType = 'image'; }
       else if (audioData) { msgText = `[audio:${audioData}]`; lastMsg = '🎤 Ovozli xabar'; msgType = 'audio'; }
       const newMessage = {
-        text: msgText,
-        sender: phone,
-        senderNickname: senderNickname || phone,
-        sentAt: new Date().toISOString(),
-        type: msgType,
+        text: msgText, sender: phone, senderNickname: senderNickname || phone,
+        sentAt: new Date().toISOString(), type: msgType,
         replyTo: replyTo || { msgId: null, text: '', sender: '' },
-        deleted: false
+        deleted: false, edited: false, reactions: [], pinned: false
       };
       conv.messages.push(newMessage);
       conv.lastMessage = lastMsg;
@@ -498,6 +484,84 @@ io.on('connection', (socket) => {
       const savedMsg = conv.messages[conv.messages.length - 1];
       io.to(`conv_${convId}`).emit('newConvMessage', { convId, message: savedMsg });
     } catch (err) { console.log('sendConvMessage xato:', err.message); }
+  });
+
+  // ===== XABAR TAHRIRLASH (#13) =====
+  socket.on('editConvMessage', async (data) => {
+    const { convId, msgId, newText, phone } = data;
+    try {
+      const conv = await Conversation.findById(convId);
+      if (!conv) return;
+      const msg = conv.messages.id(msgId);
+      if (!msg || msg.sender !== phone || msg.deleted) return;
+      msg.text = newText;
+      msg.edited = true;
+      conv.lastMessage = newText;
+      await conv.save();
+      io.to(`conv_${convId}`).emit('convMessageEdited', { convId, msgId, newText });
+    } catch (err) { console.log('editConvMessage xato:', err.message); }
+  });
+
+  // ===== PIN QILISH (#14) =====
+  socket.on('pinConvMessage', async (data) => {
+    const { convId, msgId, phone } = data;
+    try {
+      const conv = await Conversation.findById(convId);
+      if (!conv) return;
+      if (!conv.admins.includes(phone) && conv.createdBy !== phone) return;
+      conv.messages.forEach(m => { m.pinned = false; });
+      const msg = conv.messages.id(msgId);
+      if (msg) {
+        msg.pinned = true;
+        conv.pinnedMessageId = msgId;
+      }
+      await conv.save();
+      io.to(`conv_${convId}`).emit('convMessagePinned', { convId, msgId, text: msg?.text || '' });
+    } catch (err) { console.log('pinConvMessage xato:', err.message); }
+  });
+
+  socket.on('unpinConvMessage', async (data) => {
+    const { convId, phone } = data;
+    try {
+      const conv = await Conversation.findById(convId);
+      if (!conv) return;
+      if (!conv.admins.includes(phone) && conv.createdBy !== phone) return;
+      conv.messages.forEach(m => { m.pinned = false; });
+      conv.pinnedMessageId = null;
+      await conv.save();
+      io.to(`conv_${convId}`).emit('convMessageUnpinned', { convId });
+    } catch (err) { console.log('unpinConvMessage xato:', err.message); }
+  });
+
+  // ===== REAKSIYALAR (#15) =====
+  socket.on('reactConvMessage', async (data) => {
+    const { convId, msgId, emoji, phone } = data;
+    try {
+      const conv = await Conversation.findById(convId);
+      if (!conv) return;
+      const msg = conv.messages.id(msgId);
+      if (!msg) return;
+      const existingIdx = msg.reactions.findIndex(r => r.phone === phone && r.emoji === emoji);
+      if (existingIdx >= 0) {
+        msg.reactions.splice(existingIdx, 1);
+      } else {
+        msg.reactions = msg.reactions.filter(r => r.phone !== phone);
+        msg.reactions.push({ emoji, phone });
+      }
+      await conv.save();
+      io.to(`conv_${convId}`).emit('convMessageReacted', { convId, msgId, reactions: msg.reactions });
+    } catch (err) { console.log('reactConvMessage xato:', err.message); }
+  });
+
+  // ===== YOZILMOQDA (#18) =====
+  socket.on('typing', (data) => {
+    const { convId, phone, nickname } = data;
+    socket.to(`conv_${convId}`).emit('userTyping', { convId, phone, nickname });
+  });
+
+  socket.on('stopTyping', (data) => {
+    const { convId, phone } = data;
+    socket.to(`conv_${convId}`).emit('userStopTyping', { convId, phone });
   });
 
   socket.on('deleteConvMessage', async (data) => {

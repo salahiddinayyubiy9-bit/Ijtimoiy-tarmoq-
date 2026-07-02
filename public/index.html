@@ -230,6 +230,16 @@
       <button id="endVoiceChatBtn" class="endVoiceChatBtn">📵 Tugatish</button>
     </div>
     <div id="blockedBanner" class="hidden blockedBanner">🚫 Bu foydalanuvchi bilan yozisha olmaysiz</div>
+    <!-- PIN PANEL (#14) -->
+    <div id="pinnedMsgBar" class="hidden pinnedMsgBar">
+      <span class="pinnedIcon">📌</span>
+      <span id="pinnedMsgText" class="pinnedMsgText"></span>
+      <button id="unpinMsgBtn" class="unpinMsgBtn">✕</button>
+    </div>
+    <!-- YOZILMOQDA (#18) -->
+    <div id="typingIndicator" class="hidden typingIndicator">
+      <span id="typingText"></span>
+    </div>
     <div id="msgSearchBar" class="hidden msgSearchBar">
       <input type="text" id="msgSearchInput" placeholder="Xabarlarda qidirish..." class="msgSearchInput">
       <button id="msgSearchClose" class="msgSearchClose">✕</button>
@@ -240,6 +250,14 @@
         <span id="replyText" class="replyText"></span>
       </div>
       <button id="cancelReplyBtn" class="cancelReplyBtn">✕</button>
+    </div>
+    <!-- TAHRIRLASH PANELI (#13) -->
+    <div id="editMsgPanel" class="hidden replyPanel" style="background:#1a2a1a;border-left-color:#4ade80;">
+      <div class="replyContent">
+        <span class="replyLabel" style="color:#4ade80;">✏️ Tahrirlash:</span>
+        <span id="editMsgPreview" class="replyText"></span>
+      </div>
+      <button id="cancelEditBtn" class="cancelReplyBtn">✕</button>
     </div>
     <div class="roomMessages" id="convPageMessages"></div>
     <div id="convMediaPanel" class="hidden">
@@ -297,12 +315,24 @@
   <!-- XABAR MENYUSI -->
   <div id="msgMenu" class="hidden msgMenu">
     <button class="msgMenuBtn" id="msgMenuReply">↩️ Javob berish</button>
+    <button class="msgMenuBtn" id="msgMenuEdit">✏️ Tahrirlash</button>
+    <button class="msgMenuBtn" id="msgMenuPin">📌 Pin qilish</button>
     <button class="msgMenuBtn" id="msgMenuForward">➡️ Yuborish</button>
     <button class="msgMenuBtn msgMenuDelete hidden" id="msgMenuDelete">🗑️ O'chirish</button>
     <button class="msgMenuBtn msgMenuClose" id="msgMenuClose">✕ Yopish</button>
   </div>
 
-  <!-- SUHBAT YUQORI O'NG MENYU (bloklash/shikoyat) -->
+  <!-- REAKSIYA PANEL (#15) -->
+  <div id="reactionPanel" class="hidden reactionPanel">
+    <span class="reactionEmoji" data-emoji="❤️">❤️</span>
+    <span class="reactionEmoji" data-emoji="👍">👍</span>
+    <span class="reactionEmoji" data-emoji="😂">😂</span>
+    <span class="reactionEmoji" data-emoji="😮">😮</span>
+    <span class="reactionEmoji" data-emoji="😢">😢</span>
+    <span class="reactionEmoji" data-emoji="🔥">🔥</span>
+  </div>
+
+  <!-- SUHBAT YUQORI O'NG MENYU -->
   <div id="convMoreMenu" class="hidden msgMenu" style="bottom:auto;top:60px;right:16px;left:auto;transform:none;">
     <button class="msgMenuBtn" id="blockUserBtn">🚫 Bloklash</button>
     <button class="msgMenuBtn" id="reportUserBtn">⚠️ Shikoyat qilish</button>
@@ -354,10 +384,7 @@
 
   <div id="discoverModal" class="hidden modalOverlay">
     <div class="modalCard adminCard">
-      <div class="modalHeader">
-        <h3 id="discoverTitle">Ommaviy guruhlar</h3>
-        <button class="modalCloseBtn" id="closeDiscoverModal">✕</button>
-      </div>
+      <div class="modalHeader"><h3 id="discoverTitle">Ommaviy guruhlar</h3><button class="modalCloseBtn" id="closeDiscoverModal">✕</button></div>
       <div id="discoverList" class="discoverList"></div>
     </div>
   </div>
@@ -374,7 +401,7 @@
       <div class="modalHeader"><h3>Profilni tahrirlash</h3><button class="modalCloseBtn" id="closeEditProfileModal">✕</button></div>
       <input type="text" class="modalInput" id="editNicknameInput" placeholder="Ism" maxlength="30">
       <input type="text" class="modalInput" id="editUsernameInput" placeholder="@username" maxlength="20">
-      <textarea class="modalInput" id="editBioInput" placeholder="Bio (qisqacha ma'lumot)" maxlength="150" rows="3" style="resize:none;font-family:inherit;"></textarea>
+      <textarea class="modalInput" id="editBioInput" placeholder="Bio" maxlength="150" rows="3" style="resize:none;font-family:inherit;"></textarea>
       <input type="date" class="modalInput" id="editBirthDateInput">
       <button class="authBtn" id="saveProfileBtn">Saqlash</button>
       <p id="editProfileMsg" class="authError hidden"></p>
@@ -391,7 +418,7 @@
         <label class="modalRadio"><input type="radio" name="reportReason" value="nomaqbul"> Nomaqbul kontent</label>
         <label class="modalRadio"><input type="radio" name="reportReason" value="boshqa"> Boshqa</label>
       </div>
-      <textarea class="modalInput" id="reportDetailsInput" placeholder="Qo'shimcha izoh (ixtiyoriy)" rows="3" style="resize:none;font-family:inherit;margin-top:10px;"></textarea>
+      <textarea class="modalInput" id="reportDetailsInput" placeholder="Qo'shimcha izoh" rows="3" style="resize:none;font-family:inherit;margin-top:10px;"></textarea>
       <button class="authBtn" id="submitReportBtn">Yuborish</button>
       <p id="reportMsg" class="authError hidden"></p>
     </div>

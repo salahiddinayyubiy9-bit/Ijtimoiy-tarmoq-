@@ -110,11 +110,22 @@ const msgSearchClose = document.getElementById('msgSearchClose');
 const replyPanel = document.getElementById('replyPanel');
 const replyText = document.getElementById('replyText');
 const cancelReplyBtn = document.getElementById('cancelReplyBtn');
+const editMsgPanel = document.getElementById('editMsgPanel');
+const editMsgPreview = document.getElementById('editMsgPreview');
+const cancelEditBtn = document.getElementById('cancelEditBtn');
+const pinnedMsgBar = document.getElementById('pinnedMsgBar');
+const pinnedMsgText = document.getElementById('pinnedMsgText');
+const unpinMsgBtn = document.getElementById('unpinMsgBtn');
+const typingIndicator = document.getElementById('typingIndicator');
+const typingText = document.getElementById('typingText');
 const msgMenu = document.getElementById('msgMenu');
 const msgMenuReply = document.getElementById('msgMenuReply');
+const msgMenuEdit = document.getElementById('msgMenuEdit');
+const msgMenuPin = document.getElementById('msgMenuPin');
 const msgMenuForward = document.getElementById('msgMenuForward');
 const msgMenuDelete = document.getElementById('msgMenuDelete');
 const msgMenuClose = document.getElementById('msgMenuClose');
+const reactionPanel = document.getElementById('reactionPanel');
 
 const searchModal = document.getElementById('searchModal');
 const closeSearchModal = document.getElementById('closeSearchModal');
@@ -180,16 +191,17 @@ let currentConvType = null;
 let currentConvData = null;
 let activeTab = 'home';
 let replyToMsg = null;
+let editingMsgId = null;
 let selectedMsgEl = null;
 let selectedMsgData = null;
 let currentOtherPhone = null;
 let isBlockedByMe = false;
+let typingTimer = null;
 
 let mediaRecorder = null;
 let audioChunks = [];
 let isRecordingRoom = false;
 let isRecordingConv = false;
-
 let peerConnection = null;
 let localStream = null;
 let isInVoiceChat = false;
@@ -229,8 +241,7 @@ function formatLastSeen(lastSeen) {
   if (mins < 60) return `${mins} daqiqa oldin`;
   const hours = Math.floor(mins / 60);
   if (hours < 24) return `${hours} soat oldin`;
-  const days = Math.floor(hours / 24);
-  return `${days} kun oldin`;
+  return `${Math.floor(hours / 24)} kun oldin`;
 }
 
 countrySelector.addEventListener('click', (e) => { e.stopPropagation(); countryDropdown.classList.toggle('hidden'); });
@@ -309,7 +320,6 @@ function showMainSection(user) {
 
 const savedUser = localStorage.getItem('user');
 if (savedUser) showMainSection(JSON.parse(savedUser));
-
 socket.on('connect', () => { if (currentUser) socket.emit('setOnline', currentUser.phone); });
 
 profileImageInput.addEventListener('change', async () => {
@@ -332,25 +342,21 @@ editProfileBtn.addEventListener('click', () => {
   hideError(editProfileMsg);
   editProfileModal.classList.remove('hidden');
 });
-
 closeEditProfileModal.addEventListener('click', () => editProfileModal.classList.add('hidden'));
 
 saveProfileBtn.addEventListener('click', async () => {
   const nickname = editNicknameInput.value.trim();
   if (!nickname) return showError(editProfileMsg, 'Ismingizni kiriting');
   const username = editUsernameInput.value.trim().replace('@', '');
-  const bio = editBioInput.value.trim();
-  const birthDate = editBirthDateInput.value;
   hideError(editProfileMsg);
   try {
     const res = await fetch('/api/profile/update', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone: currentUser.phone, nickname, username: username || null, bio, birthDate: birthDate || null })
+      body: JSON.stringify({ phone: currentUser.phone, nickname, username: username || null, bio: editBioInput.value.trim(), birthDate: editBirthDateInput.value || null })
     });
     const data = await res.json();
     if (data.success) {
-      currentUser = data.user;
-      localStorage.setItem('user', JSON.stringify(data.user));
+      currentUser = data.user; localStorage.setItem('user', JSON.stringify(data.user));
       profileNickname.textContent = data.user.nickname || data.user.phone;
       if (profileBioEl) profileBioEl.textContent = data.user.bio || '';
       editProfileModal.classList.add('hidden');
@@ -434,9 +440,12 @@ async function openConvPage(conv) {
   currentConvData = conv;
   const otherPhone = conv.members?.find(m => m !== currentUser.phone);
   convPageName.textContent = conv.name || otherPhone || 'Chat';
-  replyToMsg = null;
+  replyToMsg = null; editingMsgId = null;
   replyPanel.classList.add('hidden');
+  editMsgPanel.classList.add('hidden');
   msgSearchBar.classList.add('hidden');
+  pinnedMsgBar.classList.add('hidden');
+  typingIndicator.classList.add('hidden');
 
   const existingBar = document.getElementById('groupActionsBar');
   if (existingBar) existingBar.remove();
@@ -447,18 +456,10 @@ async function openConvPage(conv) {
     convMoreBtn.classList.remove('hidden');
     if (otherPhone) {
       fetch(`/api/users/status/${otherPhone}`).then(r => r.json()).then(d => {
-        if (d.success) {
-          convPageMeta.innerHTML = d.isOnline
-            ? '<span class="onlineDot"></span>online'
-            : `<span class="offlineDot"></span>${formatLastSeen(d.lastSeen)}`;
-        }
+        if (d.success) convPageMeta.innerHTML = d.isOnline ? '<span class="onlineDot"></span>online' : `<span class="offlineDot"></span>${formatLastSeen(d.lastSeen)}`;
       }).catch(() => {});
       fetch(`/api/users/blocked-status?phone=${currentUser.phone}&targetPhone=${otherPhone}`).then(r => r.json()).then(d => {
-        if (d.success) {
-          isBlockedByMe = d.iBlockedThem;
-          blockUserBtn.textContent = isBlockedByMe ? '✅ Blokdan chiqarish' : '🚫 Bloklash';
-          updateBlockedBanner();
-        }
+        if (d.success) { isBlockedByMe = d.iBlockedThem; blockUserBtn.textContent = isBlockedByMe ? '✅ Blokdan chiqarish' : '🚫 Bloklash'; updateBlockedBanner(); }
       }).catch(() => {});
     }
     convInputArea.classList.remove('hidden');
@@ -483,11 +484,7 @@ async function openConvPage(conv) {
     `;
     convPage.insertBefore(bar, document.getElementById('voiceChatBar').nextSibling);
     if (isAdmin) {
-      document.getElementById('addMemberBarBtn').addEventListener('click', () => {
-        addMemberModal.classList.remove('hidden');
-        addMemberInput.value = '';
-        hideError(addMemberMsg);
-      });
+      document.getElementById('addMemberBarBtn').addEventListener('click', () => { addMemberModal.classList.remove('hidden'); addMemberInput.value = ''; hideError(addMemberMsg); });
     }
     document.getElementById('leaveGroupBtn').addEventListener('click', async () => {
       if (!confirm('Guruhdan chiqmoqchimisiz?')) return;
@@ -517,7 +514,11 @@ async function openConvPage(conv) {
   try {
     const res = await fetch(`/api/conversations/${conv._id}`);
     const data = await res.json();
-    if (data.success) renderConvMessages(data.conversation.messages || []);
+    if (data.success) {
+      renderConvMessages(data.conversation.messages || []);
+      const pinned = data.conversation.messages.find(m => m.pinned);
+      if (pinned) { pinnedMsgText.textContent = pinned.text.substring(0, 50); pinnedMsgBar.classList.remove('hidden'); }
+    }
   } catch {}
 
   socket.emit('joinConversation', conv._id);
@@ -530,7 +531,7 @@ function renderConvMessages(messages) {
 }
 
 function appendConvMessage(msg) {
-  if (msg.deleted && msg.text === '[xabar o\'chirildi]') {
+  if (msg.deleted) {
     const del = document.createElement('div');
     del.className = 'msgDeleted';
     del.dataset.msgId = msg._id;
@@ -552,19 +553,16 @@ function appendConvMessage(msg) {
   }
 
   let contentHtml = '';
-  if (msg.text.startsWith('[sticker:') && msg.text.endsWith(']')) {
-    contentHtml = `<span class="messageSticker">${msg.text.slice(9, -1)}</span>`;
-  } else if (msg.text.startsWith('[gif:') && msg.text.endsWith(']')) {
-    contentHtml = `<img class="messageGif" src="${msg.text.slice(5, -1)}" alt="gif">`;
-  } else if (msg.text.startsWith('[image:') && msg.text.endsWith(']')) {
-    contentHtml = `<img class="messageImage" src="${msg.text.slice(7, -1)}" alt="rasm">`;
-  } else if (msg.text.startsWith('[audio:') && msg.text.endsWith(']')) {
-    contentHtml = `<audio class="messageAudio" controls src="${msg.text.slice(7, -1)}"></audio>`;
-  } else {
-    contentHtml = `<p class="messageText">${msg.text}</p>`;
-  }
+  if (msg.text.startsWith('[sticker:') && msg.text.endsWith(']')) contentHtml = `<span class="messageSticker">${msg.text.slice(9, -1)}</span>`;
+  else if (msg.text.startsWith('[gif:') && msg.text.endsWith(']')) contentHtml = `<img class="messageGif" src="${msg.text.slice(5, -1)}" alt="gif">`;
+  else if (msg.text.startsWith('[image:') && msg.text.endsWith(']')) contentHtml = `<img class="messageImage" src="${msg.text.slice(7, -1)}" alt="rasm">`;
+  else if (msg.text.startsWith('[audio:') && msg.text.endsWith(']')) contentHtml = `<audio class="messageAudio" controls src="${msg.text.slice(7, -1)}"></audio>`;
+  else contentHtml = `<p class="messageText">${msg.text}${msg.edited ? ' <span class="editedLabel">(tahrirlangan)</span>' : ''}</p>`;
 
-  bubble.innerHTML = `<p class="messageSender">${msg.senderNickname || msg.sender}</p>${replyHtml}${contentHtml}`;
+  const reactionsHtml = buildReactionsHtml(msg.reactions || [], msg._id);
+  const pinnedHtml = msg.pinned ? '<span class="pinnedLabel">📌</span>' : '';
+
+  bubble.innerHTML = `<p class="messageSender">${msg.senderNickname || msg.sender}${pinnedHtml}</p>${replyHtml}${contentHtml}${reactionsHtml}`;
 
   let pressTimer;
   bubble.addEventListener('touchstart', () => { pressTimer = setTimeout(() => openMsgMenu(bubble, msg, isOwn), 600); });
@@ -576,10 +574,23 @@ function appendConvMessage(msg) {
   convPageMessages.scrollTop = convPageMessages.scrollHeight;
 }
 
+function buildReactionsHtml(reactions, msgId) {
+  if (!reactions || reactions.length === 0) return '';
+  const grouped = {};
+  reactions.forEach(r => { grouped[r.emoji] = (grouped[r.emoji] || 0) + 1; });
+  const items = Object.entries(grouped).map(([emoji, count]) =>
+    `<span class="reactionBadge" data-emoji="${emoji}" data-msgid="${msgId}">${emoji} ${count}</span>`
+  ).join('');
+  return `<div class="reactionRow">${items}</div>`;
+}
+
 function openMsgMenu(bubbleEl, msg, isOwn) {
   selectedMsgEl = bubbleEl;
   selectedMsgData = msg;
   msgMenuDelete.classList[isOwn ? 'remove' : 'add']('hidden');
+  msgMenuEdit.classList[isOwn && !msg.text.startsWith('[') ? 'remove' : 'add']('hidden');
+  const isAdminOrOwner = currentConvData?.admins?.includes(currentUser.phone) || currentConvData?.createdBy === currentUser.phone;
+  msgMenuPin.classList[isAdminOrOwner ? 'remove' : 'add']('hidden');
   msgMenu.classList.remove('hidden');
 }
 
@@ -590,11 +601,59 @@ msgMenuReply.addEventListener('click', () => {
   replyToMsg = { msgId: selectedMsgData._id, text: selectedMsgData.text.substring(0, 60), sender: selectedMsgData.senderNickname || selectedMsgData.sender };
   replyText.textContent = `${replyToMsg.sender}: ${replyToMsg.text}`;
   replyPanel.classList.remove('hidden');
+  editMsgPanel.classList.add('hidden');
+  editingMsgId = null;
   msgMenu.classList.add('hidden');
   convMessageInput.focus();
 });
 
 cancelReplyBtn.addEventListener('click', () => { replyToMsg = null; replyPanel.classList.add('hidden'); });
+
+// TAHRIRLASH (#13)
+msgMenuEdit.addEventListener('click', () => {
+  if (!selectedMsgData) return;
+  editingMsgId = selectedMsgData._id;
+  editMsgPreview.textContent = selectedMsgData.text;
+  editMsgPanel.classList.remove('hidden');
+  replyPanel.classList.add('hidden');
+  replyToMsg = null;
+  convMessageInput.value = selectedMsgData.text;
+  msgMenu.classList.add('hidden');
+  convMessageInput.focus();
+});
+
+cancelEditBtn.addEventListener('click', () => { editingMsgId = null; editMsgPanel.classList.add('hidden'); convMessageInput.value = ''; });
+
+// PIN (#14)
+msgMenuPin.addEventListener('click', () => {
+  if (!selectedMsgData) return;
+  socket.emit('pinConvMessage', { convId: currentConvId, msgId: selectedMsgData._id, phone: currentUser.phone });
+  msgMenu.classList.add('hidden');
+});
+
+unpinMsgBtn.addEventListener('click', () => {
+  socket.emit('unpinConvMessage', { convId: currentConvId, phone: currentUser.phone });
+});
+
+socket.on('convMessagePinned', (data) => {
+  if (data.convId !== currentConvId) return;
+  pinnedMsgText.textContent = data.text.substring(0, 50);
+  pinnedMsgBar.classList.remove('hidden');
+  const bubbles = convPageMessages.querySelectorAll('.messageBubble');
+  bubbles.forEach(b => {
+    const senderEl = b.querySelector('.messageSender');
+    if (senderEl) senderEl.innerHTML = senderEl.innerHTML.replace('<span class="pinnedLabel">📌</span>', '');
+    if (b.dataset.msgId === data.msgId) {
+      if (senderEl && !senderEl.innerHTML.includes('📌')) senderEl.innerHTML += '<span class="pinnedLabel">📌</span>';
+    }
+  });
+});
+
+socket.on('convMessageUnpinned', (data) => {
+  if (data.convId !== currentConvId) return;
+  pinnedMsgBar.classList.add('hidden');
+  convPageMessages.querySelectorAll('.pinnedLabel').forEach(el => el.remove());
+});
 
 msgMenuDelete.addEventListener('click', () => {
   if (!selectedMsgData || !selectedMsgData._id) return;
@@ -615,28 +674,58 @@ socket.on('convMessageDeleted', (data) => {
   if (el) { el.className = 'msgDeleted'; el.innerHTML = '🗑️ Xabar o\'chirildi'; }
 });
 
-searchMsgBtn.addEventListener('click', () => {
-  msgSearchBar.classList.toggle('hidden');
-  if (!msgSearchBar.classList.contains('hidden')) msgSearchInput.focus();
+// TAHRIRLASH SOCKET (#13)
+socket.on('convMessageEdited', (data) => {
+  if (data.convId !== currentConvId) return;
+  const el = convPageMessages.querySelector(`[data-msg-id="${data.msgId}"]`);
+  if (el) {
+    const textEl = el.querySelector('.messageText');
+    if (textEl) textEl.innerHTML = `${data.newText} <span class="editedLabel">(tahrirlangan)</span>`;
+    el.dataset.msgText = data.newText;
+  }
 });
 
-msgSearchClose.addEventListener('click', () => { msgSearchBar.classList.add('hidden'); msgSearchInput.value = ''; clearMsgHighlights(); });
+// REAKSIYA SOCKET (#15)
+socket.on('convMessageReacted', (data) => {
+  if (data.convId !== currentConvId) return;
+  const el = convPageMessages.querySelector(`[data-msg-id="${data.msgId}"]`);
+  if (el) {
+    let row = el.querySelector('.reactionRow');
+    if (!row) { row = document.createElement('div'); row.className = 'reactionRow'; el.appendChild(row); }
+    row.innerHTML = buildReactionsHtml(data.reactions, data.msgId).replace('<div class="reactionRow">', '').replace('</div>', '');
+    row.querySelectorAll('.reactionBadge').forEach(badge => {
+      badge.addEventListener('click', () => {
+        socket.emit('reactConvMessage', { convId: currentConvId, msgId: badge.dataset.msgid, emoji: badge.dataset.emoji, phone: currentUser.phone });
+      });
+    });
+  }
+});
 
+// REAKSIYA PANEL (#15)
+document.querySelectorAll('.reactionEmoji').forEach(el => {
+  el.addEventListener('click', () => {
+    if (!selectedMsgData) return;
+    socket.emit('reactConvMessage', { convId: currentConvId, msgId: selectedMsgData._id, emoji: el.dataset.emoji, phone: currentUser.phone });
+    reactionPanel.classList.add('hidden');
+    msgMenu.classList.add('hidden');
+  });
+});
+
+// XABAR QIDIRUV
+searchMsgBtn.addEventListener('click', () => { msgSearchBar.classList.toggle('hidden'); if (!msgSearchBar.classList.contains('hidden')) msgSearchInput.focus(); });
+msgSearchClose.addEventListener('click', () => { msgSearchBar.classList.add('hidden'); msgSearchInput.value = ''; clearMsgHighlights(); });
 msgSearchInput.addEventListener('input', () => {
   const q = msgSearchInput.value.trim().toLowerCase();
   clearMsgHighlights();
   if (!q) return;
   const bubbles = convPageMessages.querySelectorAll('.messageBubble');
   let first = null;
-  bubbles.forEach(b => {
-    const text = b.dataset.msgText?.toLowerCase() || '';
-    if (text.includes(q)) { b.classList.add('msgHighlight'); if (!first) first = b; }
-  });
+  bubbles.forEach(b => { if ((b.dataset.msgText?.toLowerCase() || '').includes(q)) { b.classList.add('msgHighlight'); if (!first) first = b; } });
   if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
 });
-
 function clearMsgHighlights() { convPageMessages.querySelectorAll('.msgHighlight').forEach(el => el.classList.remove('msgHighlight')); }
 
+// FORWARD
 async function openForwardModal(msgText) {
   forwardModal.classList.remove('hidden');
   forwardList.innerHTML = '<p class="emptyConvText">Yuklanmoqda...</p>';
@@ -645,124 +734,42 @@ async function openForwardModal(msgText) {
       fetch(`/api/conversations?phone=${currentUser.phone}&type=private`),
       fetch(`/api/conversations?phone=${currentUser.phone}&type=group`)
     ]);
-    const chatsData = await chatsRes.json();
-    const groupsData = await groupsRes.json();
-    const all = [...(chatsData.conversations || []), ...(groupsData.conversations || [])];
+    const all = [...((await chatsRes.json()).conversations || []), ...((await groupsRes.json()).conversations || [])];
     forwardList.innerHTML = '';
-    if (all.length === 0) { forwardList.innerHTML = '<p class="emptyConvText">Yuborish uchun chatlar yo\'q.</p>'; return; }
+    if (all.length === 0) { forwardList.innerHTML = '<p class="emptyConvText">Chatlar yo\'q.</p>'; return; }
     all.forEach(conv => {
       const otherPhone = conv.members?.find(m => m !== currentUser.phone);
       const name = conv.name || otherPhone || 'Chat';
-      const icon = conv.type === 'private' ? '👤' : '👥';
-      const item = document.createElement('div');
-      item.className = 'discoverItem';
-      item.innerHTML = `<div class="discoverItemInfo"><div class="discoverItemName">${icon} ${name}</div></div><button class="discoverJoinBtn">Yuborish</button>`;
-      item.querySelector('.discoverJoinBtn').addEventListener('click', () => {
+      const el = document.createElement('div');
+      el.className = 'discoverItem';
+      el.innerHTML = `<div class="discoverItemInfo"><div class="discoverItemName">${conv.type === 'private' ? '👤' : '👥'} ${name}</div></div><button class="discoverJoinBtn">Yuborish</button>`;
+      el.querySelector('.discoverJoinBtn').addEventListener('click', () => {
         socket.emit('sendConvMessage', { convId: conv._id, text: `📨 Forward: ${msgText}`, phone: currentUser.phone, senderNickname: currentUser.nickname || currentUser.phone });
         forwardModal.classList.add('hidden');
         alert('Xabar yuborildi!');
       });
-      forwardList.appendChild(item);
+      forwardList.appendChild(el);
     });
   } catch { forwardList.innerHTML = '<p class="emptyConvText">Xatolik.</p>'; }
 }
-
 closeForwardModal.addEventListener('click', () => forwardModal.classList.add('hidden'));
 
-closeAddMemberModal.addEventListener('click', () => { addMemberModal.classList.add('hidden'); addMemberInput.value = ''; });
-
-addMemberBtn.addEventListener('click', async () => {
-  const q = addMemberInput.value.trim();
-  if (!q) return showError(addMemberMsg, 'Telefon yoki username kiriting');
-  hideError(addMemberMsg);
-  try {
-    const body = q.startsWith('@') ? { phone: currentUser.phone, targetUsername: q.slice(1) } : { phone: currentUser.phone, targetPhone: q };
-    const res = await fetch(`/api/conversations/${currentConvId}/add-member`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-    const data = await res.json();
-    if (data.success) {
-      addMemberModal.classList.add('hidden');
-      addMemberInput.value = '';
-      alert('A\'zo muvaffaqiyatli qo\'shildi!');
-      convPageMeta.textContent = `${data.conversation.members?.length || 0} a'zo`;
-    } else showError(addMemberMsg, data.error);
-  } catch { showError(addMemberMsg, 'Xatolik yuz berdi.'); }
-});
-
-discoverGroupsBtn.addEventListener('click', () => openDiscoverModal('group'));
-discoverChannelsBtn.addEventListener('click', () => openDiscoverModal('channel'));
-closeDiscoverModal.addEventListener('click', () => discoverModal.classList.add('hidden'));
-
-async function openDiscoverModal(type) {
-  discoverTitle.textContent = type === 'group' ? 'Ommaviy guruhlar' : 'Ommaviy kanallar';
-  discoverModal.classList.remove('hidden');
-  discoverList.innerHTML = '<p class="emptyConvText">Yuklanmoqda...</p>';
-  try {
-    const res = await fetch(`/api/discover?type=${type}`);
-    const data = await res.json();
-    discoverList.innerHTML = '';
-    if (!data.success || data.items.length === 0) { discoverList.innerHTML = '<p class="emptyConvText">Hali ommaviy ' + (type === 'group' ? 'guruhlar' : 'kanallar') + ' yo\'q.</p>'; return; }
-    data.items.forEach(item => {
-      const isMember = item.members?.includes(currentUser.phone) || item.subscribers?.includes(currentUser.phone);
-      const el = document.createElement('div');
-      el.className = 'discoverItem';
-      el.innerHTML = `
-        <div class="discoverItemInfo">
-          <div class="discoverItemName">${type === 'group' ? '👥' : '📢'} ${item.name}</div>
-          <div class="discoverItemMeta">${item.members?.length || 0} a'zo</div>
-        </div>
-        <button class="discoverJoinBtn ${isMember ? 'joined' : ''}">${isMember ? 'A\'zo' : 'Qo\'shilish'}</button>
-      `;
-      const joinBtn = el.querySelector('.discoverJoinBtn');
-      if (!isMember) {
-        joinBtn.addEventListener('click', async () => {
-          try {
-            const url = type === 'channel' ? `/api/conversations/${item._id}/subscribe` : `/api/conversations/${item._id}/add-member`;
-            const body = type === 'channel' ? { phone: currentUser.phone } : { phone: currentUser.phone, targetPhone: currentUser.phone };
-            await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-            joinBtn.textContent = 'A\'zo';
-            joinBtn.classList.add('joined');
-            loadConversations(type === 'group' ? 'group' : 'channel');
-          } catch {}
-        });
-      }
-      discoverList.appendChild(el);
-    });
-  } catch { discoverList.innerHTML = '<p class="emptyConvText">Xatolik.</p>'; }
-}
-
+// BLOKLASH
 convMoreBtn.addEventListener('click', () => convMoreMenu.classList.toggle('hidden'));
 convMoreClose.addEventListener('click', () => convMoreMenu.classList.add('hidden'));
 
 blockUserBtn.addEventListener('click', async () => {
   if (!currentOtherPhone) return;
   convMoreMenu.classList.add('hidden');
-  const action = isBlockedByMe ? 'unblock' : 'block';
-  if (!confirm(isBlockedByMe ? 'Blokdan chiqarmoqchimisiz?' : 'Foydalanuvchini bloklamoqchimisiz?')) return;
+  if (!confirm(isBlockedByMe ? 'Blokdan chiqarmoqchimisiz?' : 'Bloklamoqchimisiz?')) return;
   try {
-    const res = await fetch(`/api/users/${action}`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone: currentUser.phone, targetPhone: currentOtherPhone })
-    });
+    const res = await fetch(`/api/users/${isBlockedByMe ? 'unblock' : 'block'}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone: currentUser.phone, targetPhone: currentOtherPhone }) });
     const data = await res.json();
-    if (data.success) {
-      currentUser = data.user;
-      localStorage.setItem('user', JSON.stringify(data.user));
-      isBlockedByMe = !isBlockedByMe;
-      blockUserBtn.textContent = isBlockedByMe ? '✅ Blokdan chiqarish' : '🚫 Bloklash';
-      updateBlockedBanner();
-      alert(isBlockedByMe ? 'Foydalanuvchi bloklandi' : 'Blokdan chiqarildi');
-    }
-  } catch { alert('Xatolik yuz berdi.'); }
+    if (data.success) { currentUser = data.user; localStorage.setItem('user', JSON.stringify(data.user)); isBlockedByMe = !isBlockedByMe; blockUserBtn.textContent = isBlockedByMe ? '✅ Blokdan chiqarish' : '🚫 Bloklash'; updateBlockedBanner(); }
+  } catch { alert('Xatolik.'); }
 });
 
-reportUserBtn.addEventListener('click', () => {
-  convMoreMenu.classList.add('hidden');
-  reportDetailsInput.value = '';
-  hideError(reportMsg);
-  document.querySelectorAll('input[name="reportReason"]').forEach(r => r.checked = false);
-  reportModal.classList.remove('hidden');
-});
-
+reportUserBtn.addEventListener('click', () => { convMoreMenu.classList.add('hidden'); reportDetailsInput.value = ''; hideError(reportMsg); document.querySelectorAll('input[name="reportReason"]').forEach(r => r.checked = false); reportModal.classList.remove('hidden'); });
 closeReportModal.addEventListener('click', () => reportModal.classList.add('hidden'));
 
 submitReportBtn.addEventListener('click', async () => {
@@ -770,48 +777,48 @@ submitReportBtn.addEventListener('click', async () => {
   if (!reasonEl) return showError(reportMsg, 'Sababni tanlang');
   hideError(reportMsg);
   try {
-    const res = await fetch('/api/reports/create', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        reportedBy: currentUser.phone,
-        reportedUser: currentOtherPhone,
-        reason: reasonEl.value,
-        details: reportDetailsInput.value.trim()
-      })
-    });
+    const res = await fetch('/api/reports/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reportedBy: currentUser.phone, reportedUser: currentOtherPhone, reason: reasonEl.value, details: reportDetailsInput.value.trim() }) });
     const data = await res.json();
-    if (data.success) {
-      reportModal.classList.add('hidden');
-      alert('Shikoyatingiz qabul qilindi. Rahmat!');
-    }
-  } catch { showError(reportMsg, 'Xatolik yuz berdi.'); }
+    if (data.success) { reportModal.classList.add('hidden'); alert('Shikoyatingiz qabul qilindi!'); }
+  } catch { showError(reportMsg, 'Xatolik.'); }
 });
 
 function updateBlockedBanner() {
-  if (isBlockedByMe) {
-    blockedBanner.classList.remove('hidden');
-    convInputArea.classList.add('hidden');
-  } else {
-    blockedBanner.classList.add('hidden');
-    if (currentConvType === 'private') convInputArea.classList.remove('hidden');
-  }
+  if (isBlockedByMe) { blockedBanner.classList.remove('hidden'); convInputArea.classList.add('hidden'); }
+  else { blockedBanner.classList.add('hidden'); if (currentConvType === 'private') convInputArea.classList.remove('hidden'); }
 }
 
-socket.on('messageBlocked', () => { alert('Xabar yuborilmadi — siz yoki suhbatdoshingiz bloklangan.'); });
+socket.on('messageBlocked', () => alert('Xabar yuborilmadi — bloklangan.'));
+
+// YOZILMOQDA (#18)
+convMessageInput.addEventListener('input', () => {
+  if (!currentConvId) return;
+  socket.emit('typing', { convId: currentConvId, phone: currentUser.phone, nickname: currentUser.nickname || currentUser.phone });
+  clearTimeout(typingTimer);
+  typingTimer = setTimeout(() => { socket.emit('stopTyping', { convId: currentConvId, phone: currentUser.phone }); }, 2000);
+});
+
+socket.on('userTyping', (data) => {
+  if (data.convId !== currentConvId || data.phone === currentUser.phone) return;
+  typingText.textContent = `${data.nickname} yozmoqda...`;
+  typingIndicator.classList.remove('hidden');
+});
+
+socket.on('userStopTyping', (data) => {
+  if (data.convId !== currentConvId || data.phone === currentUser.phone) return;
+  typingIndicator.classList.add('hidden');
+});
 
 convBackBtn.addEventListener('click', () => {
   if (isInVoiceChat) endVoiceChat();
-  convMoreBtn.classList.add('hidden');
-  convMoreMenu.classList.add('hidden');
-  blockedBanner.classList.add('hidden');
-  convPage.classList.add('hidden');
-  unlockScroll();
-  closeAllConvPanels();
-  clearState();
-  msgSearchBar.classList.add('hidden');
-  msgSearchInput.value = '';
-  replyToMsg = null;
-  replyPanel.classList.add('hidden');
+  convMoreBtn.classList.add('hidden'); convMoreMenu.classList.add('hidden');
+  blockedBanner.classList.add('hidden'); pinnedMsgBar.classList.add('hidden');
+  typingIndicator.classList.add('hidden');
+  convPage.classList.add('hidden'); unlockScroll();
+  closeAllConvPanels(); clearState();
+  msgSearchBar.classList.add('hidden'); msgSearchInput.value = '';
+  replyToMsg = null; replyPanel.classList.add('hidden');
+  editingMsgId = null; editMsgPanel.classList.add('hidden');
   const bar = document.getElementById('groupActionsBar');
   if (bar) bar.remove();
   if (activeTab === 'chats') loadConversations('private');
@@ -825,10 +832,15 @@ convMessageInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendC
 function sendConvMessage() {
   const text = convMessageInput.value.trim();
   if (!text || !currentConvId) return;
-  socket.emit('sendConvMessage', { convId: currentConvId, text, phone: currentUser.phone, senderNickname: currentUser.nickname || currentUser.phone, replyTo: replyToMsg || null });
+  if (editingMsgId) {
+    socket.emit('editConvMessage', { convId: currentConvId, msgId: editingMsgId, newText: text, phone: currentUser.phone });
+    editingMsgId = null; editMsgPanel.classList.add('hidden');
+  } else {
+    socket.emit('sendConvMessage', { convId: currentConvId, text, phone: currentUser.phone, senderNickname: currentUser.nickname || currentUser.phone, replyTo: replyToMsg || null });
+    replyToMsg = null; replyPanel.classList.add('hidden');
+  }
   convMessageInput.value = '';
-  replyToMsg = null;
-  replyPanel.classList.add('hidden');
+  socket.emit('stopTyping', { convId: currentConvId, phone: currentUser.phone });
 }
 
 convImageInput.addEventListener('change', async () => {
@@ -850,6 +862,7 @@ channelSubBtn.addEventListener('click', async () => {
 
 socket.on('newConvMessage', (data) => { if (currentConvId && data.convId === currentConvId) appendConvMessage(data.message); });
 
+// OVOZLI XABAR
 async function startVoiceRecording(isRoom) {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -883,33 +896,24 @@ roomVoiceBtn.addEventListener('mousedown', () => startVoiceRecording(true));
 roomVoiceBtn.addEventListener('mouseup', () => stopVoiceRecording(true));
 roomVoiceBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startVoiceRecording(true); });
 roomVoiceBtn.addEventListener('touchend', (e) => { e.preventDefault(); stopVoiceRecording(true); });
-
 convVoiceBtn.addEventListener('mousedown', () => startVoiceRecording(false));
 convVoiceBtn.addEventListener('mouseup', () => stopVoiceRecording(false));
 convVoiceBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startVoiceRecording(false); });
 convVoiceBtn.addEventListener('touchend', (e) => { e.preventDefault(); stopVoiceRecording(false); });
 
+// WEBRTC
 voiceChatBtn.addEventListener('click', async () => {
   if (isInVoiceChat) { endVoiceChat(); return; }
   try {
     localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
     peerConnection = new RTCPeerConnection(STUN_SERVERS);
     localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
-    peerConnection.ontrack = (e) => {
-      const remoteAudio = document.createElement('audio');
-      remoteAudio.srcObject = e.streams[0];
-      remoteAudio.autoplay = true;
-      remoteAudio.id = 'remoteAudio';
-      document.body.appendChild(remoteAudio);
-    };
+    peerConnection.ontrack = (e) => { const a = document.createElement('audio'); a.srcObject = e.streams[0]; a.autoplay = true; a.id = 'remoteAudio'; document.body.appendChild(a); };
     peerConnection.onicecandidate = (e) => { if (e.candidate) socket.emit('webrtc-ice', { convId: currentConvId, candidate: e.candidate }); };
     const offer = await peerConnection.createOffer();
     await peerConnection.setLocalDescription(offer);
     socket.emit('webrtc-offer', { convId: currentConvId, offer });
-    isInVoiceChat = true;
-    voiceChatBtn.classList.add('active');
-    voiceChatBar.classList.remove('hidden');
-    voiceChatStatus.textContent = '📞 Ulanilmoqda...';
+    isInVoiceChat = true; voiceChatBtn.classList.add('active'); voiceChatBar.classList.remove('hidden'); voiceChatStatus.textContent = '📞 Ulanilmoqda...';
   } catch { alert('Mikrofonga ruxsat berilmadi.'); }
 });
 
@@ -918,11 +922,9 @@ endVoiceChatBtn.addEventListener('click', endVoiceChat);
 function endVoiceChat() {
   if (peerConnection) { peerConnection.close(); peerConnection = null; }
   if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
-  const remoteAudio = document.getElementById('remoteAudio');
-  if (remoteAudio) remoteAudio.remove();
-  isInVoiceChat = false;
-  voiceChatBtn.classList.remove('active');
-  voiceChatBar.classList.add('hidden');
+  const a = document.getElementById('remoteAudio');
+  if (a) a.remove();
+  isInVoiceChat = false; voiceChatBtn.classList.remove('active'); voiceChatBar.classList.add('hidden');
   socket.emit('webrtc-end', { convId: currentConvId });
 }
 
@@ -931,22 +933,13 @@ socket.on('webrtc-offer', async (data) => {
     localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
     peerConnection = new RTCPeerConnection(STUN_SERVERS);
     localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
-    peerConnection.ontrack = (e) => {
-      const remoteAudio = document.createElement('audio');
-      remoteAudio.srcObject = e.streams[0];
-      remoteAudio.autoplay = true;
-      remoteAudio.id = 'remoteAudio';
-      document.body.appendChild(remoteAudio);
-    };
+    peerConnection.ontrack = (e) => { const a = document.createElement('audio'); a.srcObject = e.streams[0]; a.autoplay = true; a.id = 'remoteAudio'; document.body.appendChild(a); };
     peerConnection.onicecandidate = (e) => { if (e.candidate) socket.emit('webrtc-ice', { to: data.from, candidate: e.candidate }); };
     await peerConnection.setRemoteDescription(data.offer);
     const answer = await peerConnection.createAnswer();
     await peerConnection.setLocalDescription(answer);
     socket.emit('webrtc-answer', { to: data.from, answer });
-    isInVoiceChat = true;
-    voiceChatBtn.classList.add('active');
-    voiceChatBar.classList.remove('hidden');
-    voiceChatStatus.textContent = '📞 Ovozli chat faol';
+    isInVoiceChat = true; voiceChatBtn.classList.add('active'); voiceChatBar.classList.remove('hidden'); voiceChatStatus.textContent = '📞 Ovozli chat faol';
   } catch {}
 });
 
@@ -954,18 +947,61 @@ socket.on('webrtc-answer', async (data) => { try { await peerConnection.setRemot
 socket.on('webrtc-ice', async (data) => { try { if (peerConnection) await peerConnection.addIceCandidate(data.candidate); } catch {} });
 socket.on('webrtc-end', () => endVoiceChat());
 
-socket.on('userOnline', (data) => {
-  if (currentConvType === 'private' && currentConvData?.members?.includes(data.phone)) {
-    convPageMeta.innerHTML = '<span class="onlineDot"></span>online';
-  }
+socket.on('userOnline', (data) => { if (currentConvType === 'private' && currentConvData?.members?.includes(data.phone)) convPageMeta.innerHTML = '<span class="onlineDot"></span>online'; });
+socket.on('userOffline', (data) => { if (currentConvType === 'private' && currentConvData?.members?.includes(data.phone)) convPageMeta.innerHTML = `<span class="offlineDot"></span>${formatLastSeen(data.lastSeen)}`; });
+
+// GURUHGA A'ZO QO'SHISH
+closeAddMemberModal.addEventListener('click', () => { addMemberModal.classList.add('hidden'); addMemberInput.value = ''; });
+addMemberBtn.addEventListener('click', async () => {
+  const q = addMemberInput.value.trim();
+  if (!q) return showError(addMemberMsg, 'Telefon yoki username kiriting');
+  hideError(addMemberMsg);
+  try {
+    const body = q.startsWith('@') ? { phone: currentUser.phone, targetUsername: q.slice(1) } : { phone: currentUser.phone, targetPhone: q };
+    const res = await fetch(`/api/conversations/${currentConvId}/add-member`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const data = await res.json();
+    if (data.success) { addMemberModal.classList.add('hidden'); addMemberInput.value = ''; alert('A\'zo qo\'shildi!'); convPageMeta.textContent = `${data.conversation.members?.length || 0} a'zo`; }
+    else showError(addMemberMsg, data.error);
+  } catch { showError(addMemberMsg, 'Xatolik.'); }
 });
 
-socket.on('userOffline', (data) => {
-  if (currentConvType === 'private' && currentConvData?.members?.includes(data.phone)) {
-    convPageMeta.innerHTML = `<span class="offlineDot"></span>${formatLastSeen(data.lastSeen)}`;
-  }
-});
+// KASHFIYOT
+discoverGroupsBtn.addEventListener('click', () => openDiscoverModal('group'));
+discoverChannelsBtn.addEventListener('click', () => openDiscoverModal('channel'));
+closeDiscoverModal.addEventListener('click', () => discoverModal.classList.add('hidden'));
 
+async function openDiscoverModal(type) {
+  discoverTitle.textContent = type === 'group' ? 'Ommaviy guruhlar' : 'Ommaviy kanallar';
+  discoverModal.classList.remove('hidden');
+  discoverList.innerHTML = '<p class="emptyConvText">Yuklanmoqda...</p>';
+  try {
+    const res = await fetch(`/api/discover?type=${type}`);
+    const data = await res.json();
+    discoverList.innerHTML = '';
+    if (!data.success || data.items.length === 0) { discoverList.innerHTML = '<p class="emptyConvText">Hali ommaviy ' + (type === 'group' ? 'guruhlar' : 'kanallar') + ' yo\'q.</p>'; return; }
+    data.items.forEach(item => {
+      const isMember = item.members?.includes(currentUser.phone) || item.subscribers?.includes(currentUser.phone);
+      const el = document.createElement('div');
+      el.className = 'discoverItem';
+      el.innerHTML = `<div class="discoverItemInfo"><div class="discoverItemName">${type === 'group' ? '👥' : '📢'} ${item.name}</div><div class="discoverItemMeta">${item.members?.length || 0} a'zo</div></div><button class="discoverJoinBtn ${isMember ? 'joined' : ''}">${isMember ? 'A\'zo' : 'Qo\'shilish'}</button>`;
+      const joinBtn = el.querySelector('.discoverJoinBtn');
+      if (!isMember) {
+        joinBtn.addEventListener('click', async () => {
+          try {
+            const url = type === 'channel' ? `/api/conversations/${item._id}/subscribe` : `/api/conversations/${item._id}/add-member`;
+            const body = type === 'channel' ? { phone: currentUser.phone } : { phone: currentUser.phone, targetPhone: currentUser.phone };
+            await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            joinBtn.textContent = 'A\'zo'; joinBtn.classList.add('joined');
+            loadConversations(type === 'group' ? 'group' : 'channel');
+          } catch {}
+        });
+      }
+      discoverList.appendChild(el);
+    });
+  } catch { discoverList.innerHTML = '<p class="emptyConvText">Xatolik.</p>'; }
+}
+
+// MODALLAR
 newChatBtn.addEventListener('click', () => searchModal.classList.remove('hidden'));
 closeSearchModal.addEventListener('click', () => { searchModal.classList.add('hidden'); searchResults.innerHTML = ''; searchInput.value = ''; });
 
@@ -1022,6 +1058,7 @@ createChannelBtn.addEventListener('click', async () => {
   } catch {}
 });
 
+// ADMIN
 closeAdminModal.addEventListener('click', () => adminModal.classList.add('hidden'));
 document.querySelectorAll('.adminTabBtn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -1087,6 +1124,7 @@ async function loadAdminTab(tab) {
   } catch { adminContent.innerHTML = '<p class="emptyConvText">Xatolik.</p>'; }
 }
 
+// KATEGORIYA
 const categoryNames = {
   tanishuv: 'Tanishuv-chat', talabalar: 'Talabalar',
   oqituvchilar: 'O\'qituvchilar', taqdimotlar: 'Taqdimotlar',
@@ -1098,8 +1136,7 @@ async function openCategoryPage(category) {
   currentCategory = category;
   categoryPageTitle.textContent = categoryNames[category];
   categoryPageDiamonds.textContent = currentUser.diamonds;
-  lockScroll();
-  categoryPage.classList.remove('hidden');
+  lockScroll(); categoryPage.classList.remove('hidden');
   saveState('category', { category });
   await loadCategoryRooms();
 }
@@ -1137,7 +1174,6 @@ function renderCategoryRooms(rooms) {
 }
 
 categoryBackBtn.addEventListener('click', () => { categoryPage.classList.add('hidden'); unlockScroll(); currentCategory = null; clearState(); });
-
 categoryCreateRoomForm.addEventListener('submit', async e => {
   e.preventDefault();
   const name = categoryRoomNameInput.value.trim();
@@ -1149,6 +1185,7 @@ categoryCreateRoomForm.addEventListener('submit', async e => {
   } catch {}
 });
 
+// XONA
 async function openRoomPage(room) {
   currentRoomId = room._id;
   roomPageName.textContent = room.name;
@@ -1184,7 +1221,6 @@ function appendRoomMessage(msg) {
 }
 
 roomBackBtn.addEventListener('click', () => { roomPage.classList.add('hidden'); closeAllRoomPanels(); saveState('category', { category: currentCategory }); });
-
 roomDeleteBtn.addEventListener('click', async () => {
   if (!confirm('Xonani o\'chirmoqchimisiz?')) return;
   try {
@@ -1200,11 +1236,9 @@ roomSendBtn.addEventListener('click', () => {
   socket.emit('sendMessage', { roomId: currentRoomId, text, phone: currentUser.phone });
   roomMessageInput.value = '';
 });
-
 roomMessageInput.addEventListener('keydown', e => {
   if (e.key === 'Enter') { const text = roomMessageInput.value.trim(); if (!text) return; socket.emit('sendMessage', { roomId: currentRoomId, text, phone: currentUser.phone }); roomMessageInput.value = ''; }
 });
-
 roomImageInput.addEventListener('change', async () => {
   const file = roomImageInput.files[0];
   if (!file) return;
@@ -1253,6 +1287,7 @@ document.querySelectorAll('#convEmojiPanel .emojiItem').forEach(item => { item.a
 document.querySelectorAll('#convStickerPanel .stickerItem').forEach(item => { item.addEventListener('click', () => { socket.emit('sendConvMessage', { convId: currentConvId, text: `[sticker:${item.dataset.sticker}]`, phone: currentUser.phone, senderNickname: currentUser.nickname || currentUser.phone }); closeAllConvPanels(); }); });
 document.querySelectorAll('#convGifPanel .gifItem').forEach(item => { item.addEventListener('click', () => { socket.emit('sendConvMessage', { convId: currentConvId, text: `[gif:${item.src}]`, phone: currentUser.phone, senderNickname: currentUser.nickname || currentUser.phone }); closeAllConvPanels(); }); });
 
+// HOLATNI TIKLASH
 async function restoreState() {
   if (!currentUser) return;
   const savedState = localStorage.getItem(STATE_KEY);
@@ -1263,15 +1298,13 @@ async function restoreState() {
       currentCategory = state.data.category;
       categoryPageTitle.textContent = categoryNames[currentCategory];
       categoryPageDiamonds.textContent = currentUser.diamonds;
-      lockScroll();
-      categoryPage.classList.remove('hidden');
+      lockScroll(); categoryPage.classList.remove('hidden');
       await loadCategoryRooms();
     } else if (state.type === 'room' && state.data.roomId && state.data.category) {
       currentCategory = state.data.category;
       categoryPageTitle.textContent = categoryNames[currentCategory];
       categoryPageDiamonds.textContent = currentUser.diamonds;
-      lockScroll();
-      categoryPage.classList.remove('hidden');
+      lockScroll(); categoryPage.classList.remove('hidden');
       await loadCategoryRooms();
       try {
         const res = await fetch(`/api/rooms/single/${state.data.roomId}`);

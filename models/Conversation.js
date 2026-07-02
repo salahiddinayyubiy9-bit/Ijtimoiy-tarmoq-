@@ -1,5 +1,10 @@
 import mongoose from "mongoose";
 
+const reactionSchema = new mongoose.Schema({
+  emoji: { type: String, required: true },
+  phone: { type: String, required: true }
+});
+
 const messageSchema = new mongoose.Schema({
   _id: { type: mongoose.Schema.Types.ObjectId, default: () => new mongoose.Types.ObjectId() },
   text: { type: String, default: '' },
@@ -13,7 +18,10 @@ const messageSchema = new mongoose.Schema({
     text: { type: String, default: '' },
     sender: { type: String, default: '' }
   },
-  deleted: { type: Boolean, default: false }
+  deleted: { type: Boolean, default: false },
+  edited: { type: Boolean, default: false },
+  reactions: [reactionSchema],
+  pinned: { type: Boolean, default: false }
 });
 
 const conversationSchema = new mongoose.Schema({
@@ -28,7 +36,8 @@ const conversationSchema = new mongoose.Schema({
   createdAt: { type: String, default: () => new Date().toISOString() },
   messages: [messageSchema],
   lastMessage: { type: String, default: '' },
-  lastMessageAt: { type: String, default: () => new Date().toISOString() }
+  lastMessageAt: { type: String, default: () => new Date().toISOString() },
+  pinnedMessageId: { type: String, default: null }
 });
 
 export default mongoose.model("Conversation", conversationSchema);
