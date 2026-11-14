@@ -1,4 +1,4 @@
-const socket = io();
+const socket = io({ autoConnect: false });
 const STATE_KEY = 'appState';
 const ADMIN_SECRET = 'admin_secret_2026';
 
@@ -23,7 +23,8 @@ const countryFlag = document.getElementById('countryFlag');
 const countryCodeEl = document.getElementById('countryCode');
 const codeDigits = [
   document.getElementById('code1'), document.getElementById('code2'),
-  document.getElementById('code3'), document.getElementById('code4')
+  document.getElementById('code3'), document.getElementById('code4'),
+  document.getElementById('code5'), document.getElementById('code6')
 ];
 
 const mainSection = document.getElementById('mainSection');
@@ -213,6 +214,19 @@ function lockScroll() { document.body.classList.add('no-scroll'); }
 function unlockScroll() { document.body.classList.remove('no-scroll'); }
 function showError(el, msg) { el.textContent = msg; el.classList.remove('hidden'); }
 function hideError(el) { el.textContent = ''; el.classList.add('hidden'); }
+function escapeHTML(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[char]);
+}
+function safeMediaSource(value, type = 'image') {
+  const url = String(value ?? '').trim();
+  if (/^https:\/\/[^\s"'<>]+$/i.test(url) || /^\/api\/media\/avatar\/[A-Za-z0-9_-]+\.jpg$/.test(url)) return url;
+  const mime = type === 'audio'
+    ? /^data:audio\/(?:webm|ogg|mpeg|mp4|wav)(?:;codecs=[a-z0-9._-]+)?;base64,[a-z0-9+/=]+$/i
+    : /^data:image\/(?:jpeg|png|gif|webp);base64,[a-z0-9+/=]+$/i;
+  return mime.test(url) ? url : null;
+}
 
 function compressImage(file, maxWidth = 800, quality = 0.7) {
   return new Promise((resolve) => {
@@ -243,6 +257,11 @@ function formatLastSeen(lastSeen) {
   if (hours < 24) return `${hours} soat oldin`;
   return `${Math.floor(hours / 24)} kun oldin`;
 }
+function setConversationPresence(isOnline, lastSeen = null) {
+  const dot = document.createElement('span');
+  dot.className = isOnline ? 'onlineDot' : 'offlineDot';
+  convPageMeta.replaceChildren(dot, document.createTextNode(isOnline ? 'online' : formatLastSeen(lastSeen)));
+}
 
 countrySelector.addEventListener('click', (e) => { e.stopPropagation(); countryDropdown.classList.toggle('hidden'); });
 document.addEventListener('click', () => countryDropdown.classList.add('hidden'));
@@ -256,7 +275,7 @@ document.querySelectorAll('.countryOption').forEach(opt => {
 });
 
 codeDigits.forEach((input, i) => {
-  input.addEventListener('input', () => { input.value = input.value.replace(/\D/g, ''); if (input.value && i < 3) codeDigits[i + 1].focus(); });
+  input.addEventListener('input', () => { input.value = input.value.replace(/\D/g, ''); if (input.value && i < codeDigits.length - 1) codeDigits[i + 1].focus(); });
   input.addEventListener('keydown', (e) => { if (e.key === 'Backspace' && !input.value && i > 0) codeDigits[i - 1].focus(); });
 });
 function getCode() { return codeDigits.map(d => d.value).join(''); }
@@ -270,7 +289,13 @@ sendCodeBtn.addEventListener('click', async () => {
   try {
     const res = await fetch('/api/send-code', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone: fullPhone }) });
     const data = await res.json();
-    if (data.success) { currentPhone = fullPhone; step1.classList.add('hidden'); step2.classList.remove('hidden'); testCodeDisplay.textContent = `Test kodi: ${data.testCode}`; codeDigits[0].focus(); }
+    if (data.success) {
+      currentPhone = fullPhone;
+      step1.classList.add('hidden');
+      step2.classList.remove('hidden');
+      testCodeDisplay.textContent = data.debugOtp ? `Sinov kodi: ${data.debugOtp}` : 'Tasdiqlash kodi yetkazib berish xizmati sozlanmagan.';
+      codeDigits[0].focus();
+    }
     else showError(authMessage, data.error);
   } catch { showError(authMessage, 'Xatolik yuz berdi.'); }
 });
@@ -279,7 +304,7 @@ backToStep1.addEventListener('click', () => { step2.classList.add('hidden'); ste
 
 verifyCodeBtn.addEventListener('click', async () => {
   const code = getCode();
-  if (code.length < 4) return showError(codeMessage, 'To\'liq kodni kiriting');
+  if (code.length !== codeDigits.length) return showError(codeMessage, '6 xonali kodni to\'liq kiriting');
   hideError(codeMessage);
   try {
     const res = await fetch('/api/verify-code', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone: currentPhone, code }) });
@@ -313,23 +338,29 @@ function showMainSection(user) {
   profileDiamonds.textContent = user.diamonds;
   profileRank.textContent = user.rank;
   if (profileBioEl) profileBioEl.textContent = user.bio || '';
-  if (user.profileImage) profileAvatar.innerHTML = `<img src="${user.profileImage}" alt="profil">`;
+  const avatarUrl = safeMediaSource(user.profileImage);
+  if (avatarUrl) profileAvatar.innerHTML = `<img src="${escapeHTML(avatarUrl)}" alt="profil">`;
   else profileAvatar.textContent = '👤';
-  socket.emit('setOnline', user.phone);
+  if (!socket.connected) socket.connect();
 }
 
-const savedUser = localStorage.getItem('user');
-if (savedUser) showMainSection(JSON.parse(savedUser));
-socket.on('connect', () => { if (currentUser) socket.emit('setOnline', currentUser.phone); });
+socket.on('connect', () => { if (currentUser) socket.emit('setOnline'); });
 
 profileImageInput.addEventListener('change', async () => {
   const file = profileImageInput.files[0];
   if (!file || !currentUser) return;
-  const imageData = await compressImage(file, 400, 0.8);
   try {
-    const res = await fetch('/api/profile/update-image', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone: currentUser.phone, imageData }) });
+    const form = new FormData();
+    form.append('avatar', file);
+    const res = await fetch('/api/profile/avatar', { method: 'POST', body: form });
     const data = await res.json();
-    if (data.success) { currentUser = data.user; localStorage.setItem('user', JSON.stringify(data.user)); profileAvatar.innerHTML = `<img src="${imageData}" alt="profil">`; }
+    if (data.success) {
+      currentUser = data.user;
+      localStorage.setItem('user', JSON.stringify(data.user));
+      const avatarUrl = safeMediaSource(data.user.profileImage);
+      if (avatarUrl) profileAvatar.innerHTML = `<img src="${escapeHTML(avatarUrl)}" alt="profil">`;
+      else profileAvatar.textContent = '👤';
+    } else alert(data.error || 'Rasm yuklashda xatolik.');
   } catch { alert('Rasm yuklashda xatolik.'); }
   profileImageInput.value = '';
 });
@@ -364,7 +395,19 @@ saveProfileBtn.addEventListener('click', async () => {
   } catch { showError(editProfileMsg, 'Xatolik yuz berdi.'); }
 });
 
-logoutBtn.addEventListener('click', () => {
+logoutBtn.addEventListener('click', async () => {
+  try {
+    const res = await fetch('/api/logout', { method: 'POST' });
+    if (!res.ok && res.status !== 401) {
+      alert('Tizimdan chiqib bo‘lmadi. Qayta urinib ko‘ring.');
+      return;
+    }
+  } catch {
+    alert('Tarmoq xatosi. Chiqish amalga oshmadi.');
+    return;
+  }
+  socket.disconnect();
+  currentUser = null;
   localStorage.removeItem('user'); clearState(); unlockScroll();
   mainSection.classList.add('hidden'); categoryPage.classList.add('hidden');
   roomPage.classList.add('hidden'); convPage.classList.add('hidden');
@@ -426,7 +469,7 @@ function renderConversations(convs, listEl, type) {
     const time = conv.lastMessageAt ? new Date(conv.lastMessageAt).toLocaleTimeString('uz', { hour: '2-digit', minute: '2-digit' }) : '';
     item.innerHTML = `
       <div class="convAvatar">${icon}</div>
-      <div class="convInfo"><div class="convName">${name}</div><div class="convLastMsg">${lastMsg}</div></div>
+      <div class="convInfo"><div class="convName">${escapeHTML(name)}</div><div class="convLastMsg">${escapeHTML(lastMsg)}</div></div>
       <div class="convTime">${time}</div>
     `;
     item.addEventListener('click', () => openConvPage(conv));
@@ -456,7 +499,7 @@ async function openConvPage(conv) {
     convMoreBtn.classList.remove('hidden');
     if (otherPhone) {
       fetch(`/api/users/status/${otherPhone}`).then(r => r.json()).then(d => {
-        if (d.success) convPageMeta.innerHTML = d.isOnline ? '<span class="onlineDot"></span>online' : `<span class="offlineDot"></span>${formatLastSeen(d.lastSeen)}`;
+        if (d.success) setConversationPresence(d.isOnline, d.lastSeen);
       }).catch(() => {});
       fetch(`/api/users/blocked-status?phone=${currentUser.phone}&targetPhone=${otherPhone}`).then(r => r.json()).then(d => {
         if (d.success) { isBlockedByMe = d.iBlockedThem; blockUserBtn.textContent = isBlockedByMe ? '✅ Blokdan chiqarish' : '🚫 Bloklash'; updateBlockedBanner(); }
@@ -541,28 +584,35 @@ function appendConvMessage(msg) {
     return;
   }
   const bubble = document.createElement('div');
+  const messageText = String(msg.text ?? '');
   const isOwn = msg.sender === currentUser.phone;
   bubble.className = isOwn ? 'messageBubble own' : 'messageBubble';
   bubble.dataset.msgId = msg._id || '';
-  bubble.dataset.msgText = msg.text || '';
+  bubble.dataset.msgText = messageText;
   bubble.dataset.msgSender = msg.senderNickname || msg.sender || '';
 
   let replyHtml = '';
   if (msg.replyTo && msg.replyTo.msgId) {
-    replyHtml = `<div class="msgReplyBox">↩️ ${msg.replyTo.sender}: ${msg.replyTo.text.substring(0, 50)}</div>`;
+    replyHtml = `<div class="msgReplyBox">↩️ ${escapeHTML(msg.replyTo.sender)}: ${escapeHTML(String(msg.replyTo.text ?? '').substring(0, 50))}</div>`;
   }
 
   let contentHtml = '';
-  if (msg.text.startsWith('[sticker:') && msg.text.endsWith(']')) contentHtml = `<span class="messageSticker">${msg.text.slice(9, -1)}</span>`;
-  else if (msg.text.startsWith('[gif:') && msg.text.endsWith(']')) contentHtml = `<img class="messageGif" src="${msg.text.slice(5, -1)}" alt="gif">`;
-  else if (msg.text.startsWith('[image:') && msg.text.endsWith(']')) contentHtml = `<img class="messageImage" src="${msg.text.slice(7, -1)}" alt="rasm">`;
-  else if (msg.text.startsWith('[audio:') && msg.text.endsWith(']')) contentHtml = `<audio class="messageAudio" controls src="${msg.text.slice(7, -1)}"></audio>`;
-  else contentHtml = `<p class="messageText">${msg.text}${msg.edited ? ' <span class="editedLabel">(tahrirlangan)</span>' : ''}</p>`;
+  if (messageText.startsWith('[sticker:') && messageText.endsWith(']')) contentHtml = `<span class="messageSticker">${escapeHTML(messageText.slice(9, -1))}</span>`;
+  else if (messageText.startsWith('[gif:') && messageText.endsWith(']')) {
+    const src = safeMediaSource(messageText.slice(5, -1));
+    contentHtml = src ? `<img class="messageGif" src="${escapeHTML(src)}" alt="gif">` : '<p class="messageText">Media manzili yaroqsiz.</p>';
+  } else if (messageText.startsWith('[image:') && messageText.endsWith(']')) {
+    const src = safeMediaSource(messageText.slice(7, -1));
+    contentHtml = src ? `<img class="messageImage" src="${escapeHTML(src)}" alt="rasm">` : '<p class="messageText">Media manzili yaroqsiz.</p>';
+  } else if (messageText.startsWith('[audio:') && messageText.endsWith(']')) {
+    const src = safeMediaSource(messageText.slice(7, -1), 'audio');
+    contentHtml = src ? `<audio class="messageAudio" controls src="${escapeHTML(src)}"></audio>` : '<p class="messageText">Media manzili yaroqsiz.</p>';
+  } else contentHtml = `<p class="messageText">${escapeHTML(messageText)}${msg.edited ? ' <span class="editedLabel">(tahrirlangan)</span>' : ''}</p>`;
 
   const reactionsHtml = buildReactionsHtml(msg.reactions || [], msg._id);
   const pinnedHtml = msg.pinned ? '<span class="pinnedLabel">📌</span>' : '';
 
-  bubble.innerHTML = `<p class="messageSender">${msg.senderNickname || msg.sender}${pinnedHtml}</p>${replyHtml}${contentHtml}${reactionsHtml}`;
+  bubble.innerHTML = `<p class="messageSender">${escapeHTML(msg.senderNickname || msg.sender)}${pinnedHtml}</p>${replyHtml}${contentHtml}${reactionsHtml}`;
 
   let pressTimer;
   bubble.addEventListener('touchstart', () => { pressTimer = setTimeout(() => openMsgMenu(bubble, msg, isOwn), 600); });
@@ -579,7 +629,7 @@ function buildReactionsHtml(reactions, msgId) {
   const grouped = {};
   reactions.forEach(r => { grouped[r.emoji] = (grouped[r.emoji] || 0) + 1; });
   const items = Object.entries(grouped).map(([emoji, count]) =>
-    `<span class="reactionBadge" data-emoji="${emoji}" data-msgid="${msgId}">${emoji} ${count}</span>`
+    `<span class="reactionBadge" data-emoji="${escapeHTML(emoji)}" data-msgid="${escapeHTML(msgId)}">${escapeHTML(emoji)} ${count}</span>`
   ).join('');
   return `<div class="reactionRow">${items}</div>`;
 }
@@ -637,14 +687,19 @@ unpinMsgBtn.addEventListener('click', () => {
 
 socket.on('convMessagePinned', (data) => {
   if (data.convId !== currentConvId) return;
-  pinnedMsgText.textContent = data.text.substring(0, 50);
+  pinnedMsgText.textContent = String(data.text ?? '').substring(0, 50);
   pinnedMsgBar.classList.remove('hidden');
   const bubbles = convPageMessages.querySelectorAll('.messageBubble');
   bubbles.forEach(b => {
     const senderEl = b.querySelector('.messageSender');
-    if (senderEl) senderEl.innerHTML = senderEl.innerHTML.replace('<span class="pinnedLabel">📌</span>', '');
+    senderEl?.querySelector('.pinnedLabel')?.remove();
     if (b.dataset.msgId === data.msgId) {
-      if (senderEl && !senderEl.innerHTML.includes('📌')) senderEl.innerHTML += '<span class="pinnedLabel">📌</span>';
+      if (senderEl && !senderEl.querySelector('.pinnedLabel')) {
+        const label = document.createElement('span');
+        label.className = 'pinnedLabel';
+        label.textContent = '📌';
+        senderEl.appendChild(label);
+      }
     }
   });
 });
@@ -671,7 +726,7 @@ msgMenuForward.addEventListener('click', () => {
 socket.on('convMessageDeleted', (data) => {
   if (data.convId !== currentConvId) return;
   const el = convPageMessages.querySelector(`[data-msg-id="${data.msgId}"]`);
-  if (el) { el.className = 'msgDeleted'; el.innerHTML = '🗑️ Xabar o\'chirildi'; }
+  if (el) { el.className = 'msgDeleted'; el.textContent = '🗑️ Xabar o\'chirildi'; }
 });
 
 // TAHRIRLASH SOCKET (#13)
@@ -680,8 +735,8 @@ socket.on('convMessageEdited', (data) => {
   const el = convPageMessages.querySelector(`[data-msg-id="${data.msgId}"]`);
   if (el) {
     const textEl = el.querySelector('.messageText');
-    if (textEl) textEl.innerHTML = `${data.newText} <span class="editedLabel">(tahrirlangan)</span>`;
-    el.dataset.msgText = data.newText;
+    if (textEl) textEl.innerHTML = `${escapeHTML(data.newText)} <span class="editedLabel">(tahrirlangan)</span>`;
+    el.dataset.msgText = String(data.newText ?? '');
   }
 });
 
@@ -742,7 +797,7 @@ async function openForwardModal(msgText) {
       const name = conv.name || otherPhone || 'Chat';
       const el = document.createElement('div');
       el.className = 'discoverItem';
-      el.innerHTML = `<div class="discoverItemInfo"><div class="discoverItemName">${conv.type === 'private' ? '👤' : '👥'} ${name}</div></div><button class="discoverJoinBtn">Yuborish</button>`;
+      el.innerHTML = `<div class="discoverItemInfo"><div class="discoverItemName">${conv.type === 'private' ? '👤' : '👥'} ${escapeHTML(name)}</div></div><button class="discoverJoinBtn">Yuborish</button>`;
       el.querySelector('.discoverJoinBtn').addEventListener('click', () => {
         socket.emit('sendConvMessage', { convId: conv._id, text: `📨 Forward: ${msgText}`, phone: currentUser.phone, senderNickname: currentUser.nickname || currentUser.phone });
         forwardModal.classList.add('hidden');
@@ -917,15 +972,15 @@ voiceChatBtn.addEventListener('click', async () => {
   } catch { alert('Mikrofonga ruxsat berilmadi.'); }
 });
 
-endVoiceChatBtn.addEventListener('click', endVoiceChat);
+endVoiceChatBtn.addEventListener('click', () => endVoiceChat());
 
-function endVoiceChat() {
+function endVoiceChat({ notifyPeer = true } = {}) {
   if (peerConnection) { peerConnection.close(); peerConnection = null; }
   if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
   const a = document.getElementById('remoteAudio');
   if (a) a.remove();
   isInVoiceChat = false; voiceChatBtn.classList.remove('active'); voiceChatBar.classList.add('hidden');
-  socket.emit('webrtc-end', { convId: currentConvId });
+  if (notifyPeer) socket.emit('webrtc-end', { convId: currentConvId });
 }
 
 socket.on('webrtc-offer', async (data) => {
@@ -934,21 +989,21 @@ socket.on('webrtc-offer', async (data) => {
     peerConnection = new RTCPeerConnection(STUN_SERVERS);
     localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
     peerConnection.ontrack = (e) => { const a = document.createElement('audio'); a.srcObject = e.streams[0]; a.autoplay = true; a.id = 'remoteAudio'; document.body.appendChild(a); };
-    peerConnection.onicecandidate = (e) => { if (e.candidate) socket.emit('webrtc-ice', { to: data.from, candidate: e.candidate }); };
+    peerConnection.onicecandidate = (e) => { if (e.candidate) socket.emit('webrtc-ice', { convId: data.convId, candidate: e.candidate }); };
     await peerConnection.setRemoteDescription(data.offer);
     const answer = await peerConnection.createAnswer();
     await peerConnection.setLocalDescription(answer);
-    socket.emit('webrtc-answer', { to: data.from, answer });
+    socket.emit('webrtc-answer', { convId: data.convId, answer });
     isInVoiceChat = true; voiceChatBtn.classList.add('active'); voiceChatBar.classList.remove('hidden'); voiceChatStatus.textContent = '📞 Ovozli chat faol';
   } catch {}
 });
 
-socket.on('webrtc-answer', async (data) => { try { await peerConnection.setRemoteDescription(data.answer); voiceChatStatus.textContent = '📞 Ovozli chat faol'; } catch {} });
-socket.on('webrtc-ice', async (data) => { try { if (peerConnection) await peerConnection.addIceCandidate(data.candidate); } catch {} });
-socket.on('webrtc-end', () => endVoiceChat());
+socket.on('webrtc-answer', async (data) => { if (data.convId !== currentConvId) return; try { await peerConnection?.setRemoteDescription(data.answer); voiceChatStatus.textContent = '📞 Ovozli chat faol'; } catch {} });
+socket.on('webrtc-ice', async (data) => { if (data.convId !== currentConvId) return; try { if (peerConnection) await peerConnection.addIceCandidate(data.candidate); } catch {} });
+socket.on('webrtc-end', (data) => { if (data?.convId === currentConvId) endVoiceChat({ notifyPeer: false }); });
 
-socket.on('userOnline', (data) => { if (currentConvType === 'private' && currentConvData?.members?.includes(data.phone)) convPageMeta.innerHTML = '<span class="onlineDot"></span>online'; });
-socket.on('userOffline', (data) => { if (currentConvType === 'private' && currentConvData?.members?.includes(data.phone)) convPageMeta.innerHTML = `<span class="offlineDot"></span>${formatLastSeen(data.lastSeen)}`; });
+socket.on('userOnline', (data) => { if (currentConvType === 'private' && currentConvData?.members?.includes(data.phone)) setConversationPresence(true); });
+socket.on('userOffline', (data) => { if (currentConvType === 'private' && currentConvData?.members?.includes(data.phone)) setConversationPresence(false, data.lastSeen); });
 
 // GURUHGA A'ZO QO'SHISH
 closeAddMemberModal.addEventListener('click', () => { addMemberModal.classList.add('hidden'); addMemberInput.value = ''; });
@@ -980,10 +1035,10 @@ async function openDiscoverModal(type) {
     discoverList.innerHTML = '';
     if (!data.success || data.items.length === 0) { discoverList.innerHTML = '<p class="emptyConvText">Hali ommaviy ' + (type === 'group' ? 'guruhlar' : 'kanallar') + ' yo\'q.</p>'; return; }
     data.items.forEach(item => {
-      const isMember = item.members?.includes(currentUser.phone) || item.subscribers?.includes(currentUser.phone);
+      const isMember = Boolean(item.joined);
       const el = document.createElement('div');
       el.className = 'discoverItem';
-      el.innerHTML = `<div class="discoverItemInfo"><div class="discoverItemName">${type === 'group' ? '👥' : '📢'} ${item.name}</div><div class="discoverItemMeta">${item.members?.length || 0} a'zo</div></div><button class="discoverJoinBtn ${isMember ? 'joined' : ''}">${isMember ? 'A\'zo' : 'Qo\'shilish'}</button>`;
+      el.innerHTML = `<div class="discoverItemInfo"><div class="discoverItemName">${type === 'group' ? '👥' : '📢'} ${escapeHTML(item.name)}</div><div class="discoverItemMeta">${Number(item.memberCount) || 0} a'zo</div></div><button class="discoverJoinBtn ${isMember ? 'joined' : ''}">${isMember ? 'A\'zo' : 'Qo\'shilish'}</button>`;
       const joinBtn = el.querySelector('.discoverJoinBtn');
       if (!isMember) {
         joinBtn.addEventListener('click', async () => {
@@ -1017,12 +1072,15 @@ searchBtn.addEventListener('click', async () => {
       if (user.phone === currentUser.phone) return;
       const item = document.createElement('div');
       item.className = 'searchResultItem';
-      const avatar = user.profileImage ? `<img src="${user.profileImage}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">` : '👤';
-      item.innerHTML = `<div class="convAvatar">${avatar}</div><div><div class="searchResultName">${user.nickname || user.phone}</div><div class="searchResultPhone">${user.username ? '@' + user.username : user.phone}</div></div>`;
+      const avatarUrl = safeMediaSource(user.profileImage);
+      const avatar = avatarUrl ? `<img src="${escapeHTML(avatarUrl)}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">` : '👤';
+      item.innerHTML = `<div class="convAvatar">${avatar}</div><div><div class="searchResultName">${escapeHTML(user.nickname || user.phone)}</div><div class="searchResultPhone">${escapeHTML(user.username ? '@' + user.username : user.phone)}</div></div>`;
       item.addEventListener('click', async () => {
         searchModal.classList.add('hidden'); searchResults.innerHTML = ''; searchInput.value = '';
         try {
-          const res = await fetch('/api/conversations/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'private', phone: currentUser.phone, targetPhone: user.phone }) });
+          const target = user.username ? { targetUsername: user.username } : user.phone ? { targetPhone: user.phone } : null;
+          if (!target) return;
+          const res = await fetch('/api/conversations/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'private', ...target }) });
           const data = await res.json();
           if (data.success) { await loadConversations('private'); openConvPage(data.conversation); }
         } catch {}
@@ -1084,7 +1142,7 @@ async function loadAdminTab(tab) {
       const row = document.createElement('div');
       row.className = 'adminRow';
       if (tab === 'users') {
-        row.innerHTML = `<div class="adminRowInfo"><div class="adminRowName">${item.nickname || '—'} ${item.username ? '@' + item.username : ''}</div><div class="adminRowSub">${item.phone} | 💎${item.diamonds} | 🏅${item.rank}</div></div><div class="adminRowBtns"><button class="adminBtn adminGiveBtn" data-phone="${item.phone}">+50💎</button><button class="adminBtn adminDelBtn" data-phone="${item.phone}">🗑️</button></div>`;
+        row.innerHTML = `<div class="adminRowInfo"><div class="adminRowName">${escapeHTML(item.nickname || '—')} ${escapeHTML(item.username ? '@' + item.username : '')}</div><div class="adminRowSub">${escapeHTML(item.phone)} | 💎${Number(item.diamonds) || 0} | 🏅${escapeHTML(item.rank)}</div></div><div class="adminRowBtns"><button class="adminBtn adminGiveBtn" data-phone="${escapeHTML(item.phone)}">+50💎</button><button class="adminBtn adminDelBtn" data-phone="${escapeHTML(item.phone)}">🗑️</button></div>`;
         row.querySelector('.adminGiveBtn').addEventListener('click', async (e) => {
           const r = await fetch(`/api/admin/users/${e.target.dataset.phone}/diamonds`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-secret': ADMIN_SECRET }, body: JSON.stringify({ amount: 50 }) });
           const d = await r.json();
@@ -1096,21 +1154,21 @@ async function loadAdminTab(tab) {
           loadAdminTab('users');
         });
       } else if (tab === 'rooms') {
-        row.innerHTML = `<div class="adminRowInfo"><div class="adminRowName">${item.name}</div><div class="adminRowSub">${item.category} | ${item.createdBy}</div></div><button class="adminBtn adminDelBtn" data-id="${item._id}">🗑️</button>`;
+        row.innerHTML = `<div class="adminRowInfo"><div class="adminRowName">${escapeHTML(item.name)}</div><div class="adminRowSub">${escapeHTML(item.category)} | ${escapeHTML(item.createdBy)}</div></div><button class="adminBtn adminDelBtn" data-id="${escapeHTML(item._id)}">🗑️</button>`;
         row.querySelector('.adminDelBtn').addEventListener('click', async (e) => {
           if (!confirm('O\'chirishni tasdiqlaysizmi?')) return;
           await fetch(`/api/admin/rooms/${e.target.dataset.id}`, { method: 'DELETE', headers: { 'x-admin-secret': ADMIN_SECRET } });
           loadAdminTab('rooms');
         });
       } else if (tab === 'convs') {
-        row.innerHTML = `<div class="adminRowInfo"><div class="adminRowName">${item.name || item.type} (${item.type})</div><div class="adminRowSub">${item.createdBy} | ${item.members?.length || 0} a'zo</div></div><button class="adminBtn adminDelBtn" data-id="${item._id}">🗑️</button>`;
+        row.innerHTML = `<div class="adminRowInfo"><div class="adminRowName">${escapeHTML(item.name || item.type)} (${escapeHTML(item.type)})</div><div class="adminRowSub">${escapeHTML(item.createdBy)} | ${item.members?.length || 0} a'zo</div></div><button class="adminBtn adminDelBtn" data-id="${escapeHTML(item._id)}">🗑️</button>`;
         row.querySelector('.adminDelBtn').addEventListener('click', async (e) => {
           if (!confirm('O\'chirishni tasdiqlaysizmi?')) return;
           await fetch(`/api/admin/conversations/${e.target.dataset.id}`, { method: 'DELETE', headers: { 'x-admin-secret': ADMIN_SECRET } });
           loadAdminTab('convs');
         });
       } else {
-        row.innerHTML = `<div class="adminRowInfo"><div class="adminRowName">${item.reason} ${item.status === 'resolved' ? '✅' : '🟡'}</div><div class="adminRowSub">${item.reportedBy} → ${item.reportedUser}${item.details ? ' | ' + item.details : ''}</div></div>${item.status !== 'resolved' ? `<button class="adminBtn adminGiveBtn" data-id="${item._id}">✅ Hal qilindi</button>` : ''}`;
+        row.innerHTML = `<div class="adminRowInfo"><div class="adminRowName">${escapeHTML(item.reason)} ${item.status === 'resolved' ? '✅' : '🟡'}</div><div class="adminRowSub">${escapeHTML(item.reportedBy)} → ${escapeHTML(item.reportedUser)}${item.details ? ' | ' + escapeHTML(item.details) : ''}</div></div>${item.status !== 'resolved' ? `<button class="adminBtn adminGiveBtn" data-id="${escapeHTML(item._id)}">✅ Hal qilindi</button>` : ''}`;
         const resolveBtn = row.querySelector('.adminGiveBtn');
         if (resolveBtn) {
           resolveBtn.addEventListener('click', async (e) => {
@@ -1156,7 +1214,7 @@ function renderCategoryRooms(rooms) {
     const item = document.createElement('div');
     item.className = 'roomItem';
     const isOwner = currentUser && room.createdBy === currentUser.phone;
-    item.innerHTML = `<span class="roomName">${room.name}</span><span class="roomCreator">${room.createdBy}</span>${isOwner ? '<span class="deleteRoomBtn">🗑️</span>' : ''}`;
+    item.innerHTML = `<span class="roomName">${escapeHTML(room.name)}</span><span class="roomCreator">${escapeHTML(room.createdBy)}</span>${isOwner ? '<span class="deleteRoomBtn">🗑️</span>' : ''}`;
     item.addEventListener('click', e => { if (e.target.classList.contains('deleteRoomBtn')) return; openRoomPage(room); });
     if (isOwner) {
       item.querySelector('.deleteRoomBtn').addEventListener('click', async e => {
@@ -1207,15 +1265,22 @@ function renderRoomMessages(messages) {
 
 function appendRoomMessage(msg) {
   const bubble = document.createElement('div');
+  const messageText = String(msg.text ?? '');
   const isOwn = msg.sender === currentUser.phone;
   bubble.className = isOwn ? 'messageBubble own' : 'messageBubble';
   let contentHtml = '';
-  if (msg.text.startsWith('[sticker:') && msg.text.endsWith(']')) contentHtml = `<span class="messageSticker">${msg.text.slice(9, -1)}</span>`;
-  else if (msg.text.startsWith('[gif:') && msg.text.endsWith(']')) contentHtml = `<img class="messageGif" src="${msg.text.slice(5, -1)}" alt="gif">`;
-  else if (msg.text.startsWith('[image:') && msg.text.endsWith(']')) contentHtml = `<img class="messageImage" src="${msg.text.slice(7, -1)}" alt="rasm">`;
-  else if (msg.text.startsWith('[audio:') && msg.text.endsWith(']')) contentHtml = `<audio class="messageAudio" controls src="${msg.text.slice(7, -1)}"></audio>`;
-  else contentHtml = `<p class="messageText">${msg.text}</p>`;
-  bubble.innerHTML = `<p class="messageSender">${msg.sender}</p>${contentHtml}`;
+  if (messageText.startsWith('[sticker:') && messageText.endsWith(']')) contentHtml = `<span class="messageSticker">${escapeHTML(messageText.slice(9, -1))}</span>`;
+  else if (messageText.startsWith('[gif:') && messageText.endsWith(']')) {
+    const src = safeMediaSource(messageText.slice(5, -1));
+    contentHtml = src ? `<img class="messageGif" src="${escapeHTML(src)}" alt="gif">` : '<p class="messageText">Media manzili yaroqsiz.</p>';
+  } else if (messageText.startsWith('[image:') && messageText.endsWith(']')) {
+    const src = safeMediaSource(messageText.slice(7, -1));
+    contentHtml = src ? `<img class="messageImage" src="${escapeHTML(src)}" alt="rasm">` : '<p class="messageText">Media manzili yaroqsiz.</p>';
+  } else if (messageText.startsWith('[audio:') && messageText.endsWith(']')) {
+    const src = safeMediaSource(messageText.slice(7, -1), 'audio');
+    contentHtml = src ? `<audio class="messageAudio" controls src="${escapeHTML(src)}"></audio>` : '<p class="messageText">Media manzili yaroqsiz.</p>';
+  } else contentHtml = `<p class="messageText">${escapeHTML(messageText)}</p>`;
+  bubble.innerHTML = `<p class="messageSender">${escapeHTML(msg.sender)}</p>${contentHtml}`;
   roomPageMessages.appendChild(bubble);
   roomPageMessages.scrollTop = roomPageMessages.scrollHeight;
 }
@@ -1255,7 +1320,7 @@ document.querySelectorAll('.categoryCard').forEach(card => {
   card.addEventListener('click', async () => {
     const category = card.dataset.category;
     try {
-      const res = await fetch('/api/category-enter', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone: currentUser.phone }) });
+      const res = await fetch('/api/category-enter', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ category }) });
       const data = await res.json();
       if (data.success) { currentUser = data.user; localStorage.setItem('user', JSON.stringify(data.user)); profileDiamonds.textContent = data.user.diamonds; await openCategoryPage(category); }
       else alert(data.error);
@@ -1326,4 +1391,26 @@ async function restoreState() {
   } catch { clearState(); }
 }
 
-restoreState();
+async function restoreAuthentication() {
+  try {
+    const res = await fetch('/api/me');
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 401) {
+      currentUser = null;
+      localStorage.removeItem('user');
+      clearState();
+      return;
+    }
+    if (!res.ok || !data.success || !data.user) {
+      throw new Error('Sessiyani tekshirib bo‘lmadi');
+    }
+    currentUser = data.user;
+    localStorage.setItem('user', JSON.stringify(data.user));
+    showMainSection(data.user);
+    await restoreState();
+  } catch {
+    showError(authMessage, 'Sessiyani tekshirib bo‘lmadi. Tarmoqni tekshirib, sahifani yangilang.');
+  }
+}
+
+restoreAuthentication();

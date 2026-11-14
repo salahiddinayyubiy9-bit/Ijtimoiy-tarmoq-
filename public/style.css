@@ -176,20 +176,24 @@ body.no-scroll {
 }
 
 .codeInputGroup {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: clamp(4px, 1.8vw, 10px);
   margin-bottom: 20px;
 }
 
 .codeDigit {
-  width: 56px;
-  height: 60px;
+  width: 100%;
+  min-width: 0;
+  height: clamp(52px, 16vw, 60px);
+  padding: 0 2px;
   background-color: #0f1115;
   border: 2px solid #2a2e38;
   border-radius: 12px;
   color: #ffffff;
-  font-size: 1.5rem;
+  font-size: clamp(1.2rem, 6vw, 1.5rem);
   font-weight: 700;
   text-align: center;
   outline: none;
